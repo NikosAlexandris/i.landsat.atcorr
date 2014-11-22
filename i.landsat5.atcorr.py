@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-MODULE:         i.landsat5.atcorr
+MODULE:         i.landsat.atcorr
 
 AUTHOR(S):      Nikos Alexandris <nik@nikosalexandris.net>
                 Converted from a bash shell script (written in Feb. 2013)
@@ -14,13 +14,13 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 """
 
 #%Module
-#%  description: Scripting atmospheric correction of Landsat5 acquisitions
+#%  description: Atmospheric correction of Landsat scenes. Acquisitions should be imported in GRASS' database in a one Mapset per scene manner! 
 #%  keywords: landsat, atmospheric correction
 #%End
 
 #%flag
 #%  key: r
-#%  description: Flag for Radiance as input
+#%  description: Input is Spectral Radiance
 #%end
 
 #%flag
@@ -29,11 +29,25 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #%end
 
 #%option
+#% key: sensor
+#% key_desc: Sensor
+#% type: string
+#% label: Landsat sensor
+#% description: Landsat sensor selecting spectral conditions indexing
+#% options: tm,mss,etm,oli
+#% descriptions: tm;Landsat5 Thematic Mapper;mss;Landsat5 Multi-Spectral Scanner;etm;Landsat7 Enhanced Thematic Mapper;oli;Landsat8 OLI
+#% required: yes
+#% multiple: no
+#%end
+
+#%option
 #% key: mapsets
 #% key_desc: Mapsets
 #% type: string
 #% label: Mapsets corresponding to scenes
-#% description: Mapsets, corresponding to Landsat5 TM scenes, for which to perform atmospheric correction
+#% description: Scenes to process
+#% options: all,.,selected
+#% descriptions: all;All mapsets except of PERMANENT;.;Current mapset;selected;Only selected mapsets
 #% answer: all
 #% required: no
 #%end
@@ -54,7 +68,7 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% label: Suffix for output image(s)
 #% description: Names of atmospherically corrected Landsat5 TM bands image(s) will end with this suffix
 #% required: yes
-#% answer: hpf
+#% answer: AtmCor
 #%end
 
 #%option
@@ -62,7 +76,7 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% key_desc: MTL file
 #% type: string
 #% label: Acquisition's metadata file (MTL)
-#% description: Landsat5 TM bands imported in GRASS' data base begin with this prefix
+#% description: Metadata file that accompanies the Landsat acquisition
 #% required: yes
 #%end
 
@@ -71,7 +85,7 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% key_desc: index
 #% type: integer
 #% label: Atmospheric model
-#% description: Index of the amtospheric model (refer to i.atcorr's manual)
+#% description: Index of the atmospheric model (refer to i.atcorr's manual)
 #% options: 0-8
 #% guisection: Parameters
 #% required: yes
@@ -151,24 +165,28 @@ msg = '''Usage: $0 [Meant Target Elevation] [AOD]\n
       the *MTL.txt metadata and within from the GRASS environment!'''
 
 # constants -----------------------------------------------------------------
-geo = 18  # Geometrical conditions
+geo = {'tm': 7, 'mss': 7, 'etm': 8, 'oli': 18}  # Geometrical conditions
 xpp = -1000  # Satellite borne [-1000]
-bnd = {1: 25, 2: 26, 3: 27, 4: 28, 5: 29, 7: 30}  # Spectral conditions index
-bnd = {1: 115, 2: 116, 3: 117, 4: 118, 5: 119, 6: 120, 7: 121, 8:122, 9:123}
+
+# Spectral conditions index
+sensors = {
+'tm':  {1: 25, 2: 26, 3: 27, 4: 28, 5: 29, 7: 30},
+'mss': {1: 31, 2: 32, 3: 33, 4: 34},
+'etm': {1: 61, 2: 62, 3: 63, 4: 64, 5: 65, 7: 66, 8: 67},
+'oli': {1: 115, 2: 116, 3: 117, 4: 118, 5: 119, 6: 120, 7: 121, 8: 122, 9: 123}
+}
+
 
 # globals ------------------------------------------------------------------
 g.message(msg)
 rad_flg = ''
+
 
 # helper functions ----------------------------------------------------------
 def cleanup():
     """Clean up temporary maps"""
     grass.run_command('g.remove', flags='f', type="rast",
                       pattern='tmp.%s*' % os.getpid(), quiet=True)
-
-def run(cmd, **kwargs):
-    """Help function executing grass commands with 'quiet=True'"""
-    grass.run_command(cmd, quiet=True, **kwargs)
 
 
 def run(cmd, **kwargs):
@@ -178,16 +196,24 @@ def run(cmd, **kwargs):
 
 def main():
     """ """
+    sensor = options['sensor']
     mapsets = options['mapsets']
 
     prefix = options['inputprefix']
     suffix = options['outputsuffix']
 
     mtl = options['mtl']
-    atm = options['atm']  # Atmospheric model [index]
-    aer = options['aer']  # Aerosols model [index]
+    atm = int(options['atm'])  # Atmospheric model [index]
+    aer = int(options['aer'])  # Aerosols model [index]
     vis = options['vis']  # Visibility [km]
-    aod = options['aod']  # Aerosol Optical Depth at 550nm
+    
+    aod = options['aod']
+    
+    if not aod:
+        aod = None
+    else:
+        aod = float(options['aod'])  # Aerosol Optical Depth at 550nm
+
     xps = options['alt']  # Mean Target Altitude [negative km]
 
     if not xps:
@@ -235,20 +261,20 @@ def main():
     date = grass.parse_command('i.landsat.toar', flags='p',
                                input='dummy', output='dummy',
                                metfile=mtl, lsatmet='date')
-    mon = date['date'][5:7]  # Month of acquisition
-    day = date['date'][8:10]  # Day of acquisition
+    mon = int(date['date'][5:7])  # Month of acquisition
+    day = int(date['date'][8:10])  # Day of acquisition
 
     # GMT in decimal hours
     gmt = grass.read_command('i.landsat.toar', flags='p',
                              input='dummy', output='dummy',
                              metfile=mtl, lsatmet='time')
-    gmt = gmt.rstrip('\n')
+    gmt = float(gmt.rstrip('\n'))
 
     # Scene's center coordinates
     cll = grass.parse_command('g.region', flags='clg')
-    lon = cll['center_long']  # Center Longitude [decimal degrees]
-    lat = cll['center_lat']  # Center Latitude [decimal degrees]
-        
+    lon = float(cll['center_long'])  # Center Longitude [decimal degrees]
+    lat = float(cll['center_lat']) # Center Latitude [decimal degrees]
+
     msg += str(mon) + ' ' + str(day) + ' ' + str(gmt) + ' ' + \
         str(lon) + ' ' + str(lat)
     g.message (msg)
@@ -285,7 +311,7 @@ def main():
         g.message(msg)
 
         # loop over Landsat bands in question
-        for band in bnd.keys():
+        for band in sensors[sensor].keys():
 
             prefix_band = prefix + str(band)
 
@@ -307,14 +333,14 @@ def main():
             """
 
             # Generate the parameterization file (icnd_landsat5)
-            p6s = Parameters(geo=geo,
+            p6s = Parameters(geo=geo[sensor],
                        mon=mon, day=day, gmt=gmt, lon=lon, lat=lat,
                        atm=atm,
                        aer=aer,
                        vis=vis,
                        aod=aod,
                        xps=xps, xpp=xpp,
-                       bnd=bnd[band])
+                       bnd=sensors[sensor][band])
 
             
             dst_dir = grass.gisenv()['GISDBASE'] + \
@@ -371,9 +397,7 @@ def main():
         # add suffix to basename & rename end product
 #        cor_nam = ("%s.%s" % (msx.split('@')[0], outputsuffix))
             run('g.rename', rast=(tmp_cor_out, "test"))
-        
-    
-            
+
 
 if __name__ == "__main__":
     options, flags = grass.parser()

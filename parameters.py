@@ -49,8 +49,8 @@ class Parameters:
             self.gmt = gmt  # decimal hours
         elif ':' in str(gmt):
             self.gmt = float(gmt[0:2]) + (float(gmt[3:5]) * 100 / 60) / 100
-
-        self.mdg = str(mon) + ' ' + str(day) + ' ' + str(gmt)  # combine
+        
+        self.mdg = "%d %d %.2f" % (self.mon, self.day, self.gmt)  # combine
 
         self.lon = float(lon)  # scene's center longitude
 
@@ -58,7 +58,8 @@ class Parameters:
 
         self.acq = '%s %f %f' % (self.mdg, lon, lat)  # 2nd line of parameters
         if len(self.acq.split(' ')) < 5:
-            raise ValueError("For line 2 in parameters file, Something is missing...")
+            raise ValueError("For line 2 in parameters file, "
+                             "Something is missing...")
 
         if 0 <= atm <= 8:
             self.atm = int(atm)
@@ -78,7 +79,7 @@ class Parameters:
             self.vis = -1
         else:
             self.vis = float(vis)
-            self.aod = None
+            self.aod = float()
 
         self.xps = float(xps)  # xps <= 0 | xps >= 0 == 'target at sea level'
 
