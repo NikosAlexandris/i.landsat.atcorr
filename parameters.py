@@ -49,7 +49,7 @@ class Parameters:
             self.gmt = gmt  # decimal hours
         elif ':' in str(gmt):
             self.gmt = float(gmt[0:2]) + (float(gmt[3:5]) * 100 / 60) / 100
-        
+
         self.mdg = "%d %d %.2f" % (self.mon, self.day, self.gmt)  # combine
 
         self.lon = float(lon)  # scene's center longitude
@@ -99,7 +99,8 @@ class Parameters:
         self.parameters += str(self.atm) + '%s# %s' % (tabs, P6S['atm']) + '\n'
         self.parameters += str(self.aer) + '%s# %s' % (tabs, P6S['aer']) + '\n'
         self.parameters += str(self.vis) + '%s# %s' % (tabs, P6S['vis']) + '\n'
-        self.parameters += str(self.aod) + '%s# %s' % (tabs, P6S['aod']) + '\n'
+        if aod != None:
+            self.parameters += str(self.aod) + '%s# %s' % (tabs, P6S['aod']) + '\n'
         self.parameters += str(self.xps) + '%s# %s' % (tabs, P6S['xps']) + '\n'
         self.parameters += str(self.xpp) + '%s# %s' % (tabs, P6S['xpp']) + '\n'
         self.parameters += str(self.bnd) + '%s# %s' % (tabs, P6S['bnd']) + '\n'
@@ -135,9 +136,20 @@ class Parameters:
 # Random example
 """
 print Parameters(geo=8,
- mon=11, day=22, gmt='02:15:',
+ mon=11, day=22, gmt='02:15',
  lon=22.2, lat=33.3,
  atm=3, aer=3, vis=10, aod=None,
+ xps=-200, xpp=-1000,
+ bnd=26)
+"""
+
+
+"""
+2012-11-08T23:42:37Z
+Parameters(geo=8,
+ mon=11, day=08, gmt='23:42',
+ lon=22.2, lat=33.3,
+ atm=2, aer=1, vis=10, aod=None,
  xps=-200, xpp=-1000,
  bnd=26)
 """

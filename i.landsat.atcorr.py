@@ -85,8 +85,9 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% key_desc: index
 #% type: integer
 #% label: Atmospheric model
-#% description: Index of the atmospheric model (refer to i.atcorr's manual)
-#% options: 0-8
+#% description: Index of the atmospheric model
+#% options: 0,1,2,3,4,5,6,7,8
+#% descriptions: 0;no gaseous absorption;1;tropical;2;milatitude summer;3;midlatitude winter;4;subarctic summer;5;subarctic winter;6;us standard 62;7;user defined;8;user defined
 #% guisection: Parameters
 #% required: yes
 #%end
@@ -96,8 +97,9 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% key_desc: index
 #% type: integer
 #% label: Aerosols model
-#% description: Index of the aerosols model (refer to i.atcorr's manual)
-#% options: 0-11
+#% description: Index of the aerosols model
+#% options: 0,1,2,3,4,5,6,7,8,9,10,11
+#% descriptions: 0;no aerosols;1;continental;2;maritime;3;urban;4;shettle;5;biomass;6;stratospheric;7;user defined;8;user defined;9;user defined;10;user defined;11;user defined
 #% guisection: Parameters
 #% required: yes
 #%end
@@ -197,25 +199,23 @@ def run(cmd, **kwargs):
 def main():
     """ """
     sensor = options['sensor']
+    
     mapsets = options['mapsets']
-
     prefix = options['inputprefix']
     suffix = options['outputsuffix']
 
     mtl = options['mtl']
     atm = int(options['atm'])  # Atmospheric model [index]
     aer = int(options['aer'])  # Aerosols model [index]
+
     vis = options['vis']  # Visibility [km]
-    
     aod = options['aod']
-    
     if not aod:
         aod = None
     else:
         aod = float(options['aod'])  # Aerosol Optical Depth at 550nm
 
     xps = options['alt']  # Mean Target Altitude [negative km]
-
     if not xps:
         msg = "Note, this value will be overwritten if a DEM raster has been "\
               "defined as an input!"
@@ -228,6 +228,8 @@ def main():
     if radiance:
         global rad_flg
         rad_flg = 'r'
+    else:
+        rad_flg = ''
 
     # If the scene to be processed was imported via the (custom) python
     # Landsat import script, then, Mapset name == Scene identifier
@@ -236,11 +238,11 @@ def main():
     if mapset == 'PERMANENT':
         grass.fatal(_('Please change to another Mapset than the PERMANENT'))
 
-    if 'L' not in mapset:
-        msg = "Assuming the Landsat scene(s) ha-s/ve been imported using the "\
-              "custom python import script, the Mapset's name *should* begin "\
-              "with the letter L!"
-        grass.fatal(_(msg))
+#    elif 'L' not in mapset:
+#        msg = "Assuming the Landsat scene(s) ha-s/ve been imported using the "\
+#              "custom python import script, the Mapset's name *should* begin "\
+#              "with the letter L!"
+#        grass.fatal(_(msg))
 
     else:
         mtl = mapset + '_MTL.txt'
@@ -295,12 +297,13 @@ def main():
     if 'PERMANENT' in scenes:
         scenes.remove('PERMANENT')
 
-    # access only to specific mapsets! - currently, by hand!
-    # g.mapsets mapset=`g.mapsets -l --v sep=comma` operator=remove
-    msg = "\n|> Performing atmospheric correction for scenes:  %s" % mapsets
-    g.message(msg)
+    # access only to specific mapsets!
+    
 
     for scene in scenes:
+        
+        msg = "\n|* Performing atmospheric correction for scene:  %s" % scene
+        g.message(msg)
 
         # ensure access only to *current* mapset
         run('g.mapsets', mapset='.', operation='set')
@@ -313,7 +316,9 @@ def main():
         # loop over Landsat bands in question
         for band in sensors[sensor].keys():
 
-            prefix_band = prefix + str(band)
+            inputband = prefix + str(band)
+            msg = "\n|> Processing band:  %s" % inputband
+            g.message(msg)
 
             """
             Things to check:
@@ -363,40 +368,47 @@ def main():
             msg += p6s.parameters
             g.message(msg)
 
-            # -------------------------------------------------------------------
-            # Applying 6S Atmospheric Correction algorithm 
-            # -------------------------------------------------------------------
-    
-    
+            # ---------------------------------------------------------------
+            # Applying 6S Atmospheric Correction algorithm
+            # ---------------------------------------------------------------
+
             if visibility:
                 pass
-    
+
             if elevation:
                 grass.debug("Now atcorring")
                 """Using an elevation map.
                 Attention: does the elevation cover the area of the images?"""
-                run('i.atcorr', flags=rad_flg,
-                    input=prefix_band,
-                    range=(0.,1.),
-                    elevation=elevation,
-                    parameters=tmp_p6s,
-                    output=tmp_cor_out,
-                    rescale=(0,1.))
-    
+#                run('i.atcorr', flags=rad_flg,
+#                    input=prefix_band,
+#                    range=(0,1),
+#                    elevation=elevation,
+#                    parameters=tmp_p6s,
+#                    output=tmp_cor_out,
+#                    rescale=(0,1))
+                pass
+
             else:
-                run('i.atcorr', flags=rad_flg,
-                    input=prefix_band,
-                    range=(0., 1.),
+                grass.debug("Now atcorring")
+                """ """
+                print rad_flg
+                print "******"
+                print inputband
+                print tmp_p6s
+                print tmp_cor_out
+
+                print "ATMCOR-ing band: ", inputband
+                run('i.atcorr',
+                    input=inputband,
                     parameters=tmp_p6s,
-                    output=tmp_cor_out,
-                    rescale=(0., 1.))
+                    output=tmp_cor_out)
 
             # inform about output's range?
             run('r.info', flags='r', map=tmp_cor_out)
 
         # add suffix to basename & rename end product
 #        cor_nam = ("%s.%s" % (msx.split('@')[0], outputsuffix))
-            run('g.rename', rast=(tmp_cor_out, "test"))
+            run('g.rename', rast=(tmp_cor_out, "ATMCOR_TEST"))
 
 
 if __name__ == "__main__":
