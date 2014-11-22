@@ -151,9 +151,10 @@ msg = '''Usage: $0 [Meant Target Elevation] [AOD]\n
       the *MTL.txt metadata and within from the GRASS environment!'''
 
 # constants -----------------------------------------------------------------
-geo = 7  # Geometrical conditions
+geo = 18  # Geometrical conditions
 xpp = -1000  # Satellite borne [-1000]
 bnd = {1: 25, 2: 26, 3: 27, 4: 28, 5: 29, 7: 30}  # Spectral conditions index
+bnd = {1: 115, 2: 116, 3: 117, 4: 118, 5: 119, 6: 120, 7: 121, 8:122, 9:123}
 
 # globals ------------------------------------------------------------------
 g.message(msg)
@@ -187,16 +188,16 @@ def main():
     aer = options['aer']  # Aerosols model [index]
     vis = options['vis']  # Visibility [km]
     aod = options['aod']  # Aerosol Optical Depth at 550nm
-    alt = options['alt']  # Mean Target Altitude [negative km]
+    xps = options['alt']  # Mean Target Altitude [negative km]
 
-    if not alt:
+    if not xps:
         msg = "Note, this value will be overwritten if a DEM raster has been "\
               "defined as an input!"
         g.message(msg)
 
     elevation = options['elevation']
     visibility = options['visibility']
-    
+
     radiance = flags['r']
     if radiance:
         global rad_flg
@@ -208,7 +209,7 @@ def main():
     mapset = grass.gisenv()['MAPSET']
     if mapset == 'PERMANENT':
         grass.fatal(_('Please change to another Mapset than the PERMANENT'))
-    
+
     if 'L' not in mapset:
         msg = "Assuming the Landsat scene(s) ha-s/ve been imported using the "\
               "custom python import script, the Mapset's name *should* begin "\
@@ -228,8 +229,7 @@ def main():
     # Acquisition's metadata
     # -----------------------------------------------------------------------
 
-    msg = "Acquisition metadata"
-    g.message(msg)
+    msg = "Acquisition metadata for 6S code (line 2 in Parameters file)\n"
 
     # Month, day
     date = grass.parse_command('i.landsat.toar', flags='p',
@@ -248,8 +248,10 @@ def main():
     cll = grass.parse_command('g.region', flags='clg')
     lon = cll['center_long']  # Center Longitude [decimal degrees]
     lat = cll['center_lat']  # Center Latitude [decimal degrees]
-    msg = "The scene's center geographic coordinates (in decimal degrees): " \
-        "${Long_NonProj} $Lat_NonProj ($Long $Lat)"
+        
+    msg += str(mon) + ' ' + str(day) + ' ' + str(gmt) + ' ' + \
+        str(lon) + ' ' + str(lat)
+    g.message (msg)
 
     # -----------------------------------------------------------------------
     # Mapsets are Scenes. Read'em all!
@@ -267,10 +269,9 @@ def main():
     if 'PERMANENT' in scenes:
         scenes.remove('PERMANENT')
 
-
     # access only to specific mapsets! - currently, by hand!
     # g.mapsets mapset=`g.mapsets -l --v sep=comma` operator=remove
-    msg = "Performing atmospheric correction for %s" % mapsets
+    msg = "\n|> Performing atmospheric correction for scenes:  %s" % mapsets
     g.message(msg)
 
     for scene in scenes:
@@ -279,11 +280,14 @@ def main():
         run('g.mapsets', mapset='.', operation='set')
 
         # scene's basename as in GRASS' db
-        basename = grass.read_command('g.mapset', flags='p') #LT5_Basename=$(basename $BAND _MTL.txt)
-        msg = "The scene's base name is %s" % basename
+        basename = grass.read_command('g.mapset', flags='p')
+        msg = "Processing scene:  %s" % basename
+        g.message(msg)
 
         # loop over Landsat bands in question
         for band in bnd.keys():
+
+            prefix_band = prefix + str(band)
 
             """
             Things to check:
@@ -301,62 +305,75 @@ def main():
             #       then AOD="${AOD_Summer}"  # set to summer AOD if...
             #   fi
             """
-            
-            # Generate the parameterization file (icnd_landsat5)
-            p6s = Parameters(geo=7,
-                       mon=11, day=21, gmt=14.5, lon=21.2, lat=23.3,
-                       atm=3,
-                       aer=1,
-                       vis=100,
-                       aod=None,
-                       xps=150, xpp=-1000,
-                       bnd=64)
 
+            # Generate the parameterization file (icnd_landsat5)
+            p6s = Parameters(geo=geo,
+                       mon=mon, day=day, gmt=gmt, lon=lon, lat=lat,
+                       atm=atm,
+                       aer=aer,
+                       vis=vis,
+                       aod=aod,
+                       xps=xps, xpp=xpp,
+                       bnd=bnd[band])
+
+            
             dst_dir = grass.gisenv()['GISDBASE'] + \
             '/' + grass.gisenv()['LOCATION_NAME'] + \
             '/' + grass.gisenv()['MAPSET'] + \
             '/cell_misc/'
+
+            # ========================================== Temporary files ====
+            tmpfile = grass.tempfile()  # replace with os.getpid?
+            tmp = "tmp." + grass.basename(tmpfile)  # use its basename
+            tmp_p6s = grass.tempfile()  # ASCII file
+
+            tmp_cor_out = "%s_cor_out" % tmp  # HPF image
+            # Temporary files ===============================================
+
+            p6s.export_ascii(tmp_p6s)
+
+            # Process band-wise atmospheric correction with 6s
+            msg = "Using the following parameters:\n\n"
+            msg += p6s.parameters
+            g.message(msg)
+
+            # -------------------------------------------------------------------
+            # Applying 6S Atmospheric Correction algorithm 
+            # -------------------------------------------------------------------
+    
+    
+            if visibility:
+                pass
+    
+            if elevation:
+                grass.debug("Now atcorring")
+                """Using an elevation map.
+                Attention: does the elevation cover the area of the images?"""
+                run('i.atcorr', flags=rad_flg,
+                    input=prefix_band,
+                    range=(0.,1.),
+                    elevation=elevation,
+                    parameters=tmp_p6s,
+                    output=tmp_cor_out,
+                    rescale=(0,1.))
+    
+            else:
+                run('i.atcorr', flags=rad_flg,
+                    input=prefix_band,
+                    range=(0., 1.),
+                    parameters=tmp_p6s,
+                    output=tmp_cor_out,
+                    rescale=(0., 1.))
+
+            # inform about output's range?
+            run('r.info', flags='r', map=tmp_cor_out)
+
+        # add suffix to basename & rename end product
+#        cor_nam = ("%s.%s" % (msx.split('@')[0], outputsuffix))
+            run('g.rename', rast=(tmp_cor_out, "test"))
+        
+    
             
-            p6s.export_ascii(dst_dir)
-
-            msg = "Processing band %s (spectral conditions index: %s)"
-            g.message(msg)
-
-
-              # Process band-wise atmospheric correction with 6s
-            msg = "Using the following parameters:"
-            g.message(msg)
-
-        #    cat $Parameters_Pool/${Basename}_icnd_${Band_No}.txt | tr "\n" " "
-
-        # -------------------------------------------------------------------
-        # Applying 6S Atmospheric Correction algorithm 
-        # -------------------------------------------------------------------
-
-        if visibility:
-            pass
-
-        if elevation:
-            """Using an elevation map.
-            Attention: does the elevation cover the area of the images?"""
-            run('i.atcorr', flags=rad_flg,
-                input=band,
-                range=(0.,1.),
-                elevation=elevation,
-                parameters=tmp_p6s,
-                output=tmp_cor_out,
-                rescale=(0,1.))
-
-        else:
-            run('i.atcorr', flags=rad_flg,
-                input=band,
-                range=(0, 1),
-                parameters=tmp_p6s,
-                output=tmp_cor_out,
-                rescale=(0, 1))        
-
-        # inform about output's range?
-        run('r.info', flags='r', map=tmp_cor_out)
 
 if __name__ == "__main__":
     options, flags = grass.parser()
