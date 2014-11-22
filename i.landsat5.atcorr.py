@@ -144,6 +144,7 @@ import sys
 import atexit
 import grass.script as grass
 from grass.pygrass.modules.shortcuts import general as g
+from parameters import Parameters
 
 msg = '''Usage: $0 [Meant Target Elevation] [AOD]\n
       Note, the script has to be eXecuted from the directory that contains\n
@@ -156,7 +157,7 @@ bnd = {1: 25, 2: 26, 3: 27, 4: 28, 5: 29, 7: 30}  # Spectral conditions index
 
 # globals ------------------------------------------------------------------
 g.message(msg)
-
+rad_flg = ''
 
 # helper functions ----------------------------------------------------------
 def cleanup():
@@ -198,6 +199,7 @@ def main():
     
     radiance = flags['r']
     if radiance:
+        global rad_flg
         rad_flg = 'r'
 
     # If the scene to be processed was imported via the (custom) python
@@ -215,10 +217,12 @@ def main():
 
     else:
         mtl = mapset + '_MTL.txt'
-        result = grass.find_file(name=mtl, element='cell_misc')
+        result = grass.find_file(element='cell_misc', name=mtl, mapset='.')
         if not result['file']:
             grass.fatal("The metadata file <%s> is not in GRASS' data base!"
                         % mtl)
+        else:
+            mtl = result['file']
 
     # -----------------------------------------------------------------------
     # Acquisition's metadata
@@ -229,14 +233,15 @@ def main():
 
     # Month, day
     date = grass.parse_command('i.landsat.toar', flags='p',
-                               input='', output='',
+                               input='dummy', output='dummy',
                                metfile=mtl, lsatmet='date')
     mon = date['date'][5:7]  # Month of acquisition
     day = date['date'][8:10]  # Day of acquisition
 
     # GMT in decimal hours
-    gmt = grass.read_command('i.landsat.toar', flags='p', input='', output='',
-                             metfile=metadata_file, lsatmet='time')
+    gmt = grass.read_command('i.landsat.toar', flags='p',
+                             input='dummy', output='dummy',
+                             metfile=mtl, lsatmet='time')
     gmt = gmt.rstrip('\n')
 
     # Scene's center coordinates
@@ -252,12 +257,14 @@ def main():
 
     if mapsets == 'all':
         scenes = grass.mapsets()
-        scenes.remove('PERMANENT')
+
     elif mapsets == '.':
         scenes = mapset
-        scenes.remove('PERMANENT')
+
     else:
         scenes = mapsets.split(',')
+
+    if 'PERMANENT' in scenes:
         scenes.remove('PERMANENT')
 
 
@@ -305,7 +312,11 @@ def main():
                        xps=150, xpp=-1000,
                        bnd=64)
 
-            dst_dir = mapset + '/cell_misc'
+            dst_dir = grass.gisenv()['GISDBASE'] + \
+            '/' + grass.gisenv()['LOCATION_NAME'] + \
+            '/' + grass.gisenv()['MAPSET'] + \
+            '/cell_misc/'
+            
             p6s.export_ascii(dst_dir)
 
             msg = "Processing band %s (spectral conditions index: %s)"
@@ -326,10 +337,8 @@ def main():
             pass
 
         if elevation:
-
             """Using an elevation map.
             Attention: does the elevation cover the area of the images?"""
-            
             run('i.atcorr', flags=rad_flg,
                 input=band,
                 range=(0.,1.),
@@ -337,7 +346,7 @@ def main():
                 parameters=tmp_p6s,
                 output=tmp_cor_out,
                 rescale=(0,1.))
-            
+
         else:
             run('i.atcorr', flags=rad_flg,
                 input=band,
@@ -345,7 +354,7 @@ def main():
                 parameters=tmp_p6s,
                 output=tmp_cor_out,
                 rescale=(0, 1))        
-        
+
         # inform about output's range?
         run('r.info', flags='r', map=tmp_cor_out)
 
