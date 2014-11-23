@@ -167,6 +167,8 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 # required librairies -------------------------------------------------------
 import os
 import sys
+sys.path.insert(1, os.path.join(os.path.dirname(sys.path[0]),
+                                'etc', 'i.landsat.atcorr'))
 import atexit
 import grass.script as grass
 from grass.pygrass.modules.shortcuts import general as g
@@ -185,7 +187,7 @@ sensors = {
 'tm':  {1: 25, 2: 26, 3: 27, 4: 28, 5: 29, 7: 30},
 'mss': {1: 31, 2: 32, 3: 33, 4: 34},
 'etm': {1: 61, 2: 62, 3: 63, 4: 64, 5: 65, 7: 66, 8: 67},
-'oli': {1: 115, 2: 116, 3: 117, 4: 118, 5: 119, 6: 120, 7: 121, 8: 122, 9: 123}
+'oli': {1: 115, 2: 116, 3: 117, 4: 118, 8: 119, 5: 120, 9: 121, 6: 122, 7: 123}
 }
 
 
@@ -390,7 +392,6 @@ def main():
                 pass
 
             if elevation:
-                grass.debug("Now atcorring")
                 """Using an elevation map.
                 Attention: does the elevation cover the area of the images?"""
 #                run('i.atcorr', flags=rad_flg,
@@ -403,11 +404,11 @@ def main():
                 pass
 
             else:
-                grass.info("Now atcorring")
                 """ """
                 run('i.atcorr',
                     flags=rad_flg,
                     input=inputband,
+                    range=(inp_rng['min'], inp_rng['max']),
                     parameters=tmp_p6s,
                     output=tmp_atm_cor,
                     rescale=(0,1))
