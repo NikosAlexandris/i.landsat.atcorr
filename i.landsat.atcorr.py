@@ -421,7 +421,7 @@ def main():
             g.message(msg)
 
             # add suffix to basename & rename end product
-            atm_cor_nam = ("%s.%s" % (inputband.split('@')[0], suffix))
+            atm_cor_nam = ("%s%s.%s" % (prefix, suffix, band))
             run('g.rename', rast=(tmp_atm_cor, atm_cor_nam))
 
 
