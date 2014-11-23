@@ -28,6 +28,8 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #%  description: Equalize histogram of output bands (r.colors -e)
 #%end
 
+
+# Get sensor from the MTL file! ------------------------------------ To Do --
 #%option
 #% key: sensor
 #% key_desc: Sensor
@@ -39,6 +41,7 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% required: yes
 #% multiple: no
 #%end
+# -- To Do ------------------------------------------------------------------
 
 #%option
 #% key: mapsets
@@ -154,6 +157,13 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% required: no
 #%end
 
+
+# Yet to work-out on options and flags relationships! -----------------------
+# %rules
+# %required inputprefix,outputsuffix
+# %end
+
+
 # required librairies -------------------------------------------------------
 import os
 import sys
@@ -199,7 +209,7 @@ def run(cmd, **kwargs):
 def main():
     """ """
     sensor = options['sensor']
-    
+
     mapsets = options['mapsets']
     prefix = options['inputprefix']
     suffix = options['outputsuffix']
@@ -287,15 +297,12 @@ def main():
 
     if mapsets == 'all':
         scenes = grass.mapsets()
-        print scenes
 
     elif mapsets == '.':
         scenes = [mapset]
-        print scenes
 
     else:
         scenes = mapsets.split(',')
-        print scenes
 
     if 'PERMANENT' in scenes:
         scenes.remove('PERMANENT')
@@ -340,25 +347,25 @@ def main():
 
             # Generate the parameterization file (icnd_landsat5)
             p6s = Parameters(geo=geo[sensor],
-                       mon=mon, day=day, gmt=gmt, lon=lon, lat=lat,
-                       atm=atm,
-                       aer=aer,
-                       vis=vis,
-                       aod=aod,
-                       xps=xps, xpp=xpp,
-                       bnd=sensors[sensor][band])
+                             mon=mon, day=day, gmt=gmt, lon=lon, lat=lat,
+                             atm=atm,
+                             aer=aer,
+                             vis=vis,
+                             aod=aod,
+                             xps=xps, xpp=xpp,
+                             bnd=sensors[sensor][band])
 
-            dst_dir = grass.gisenv()['GISDBASE'] + \
-            '/' + grass.gisenv()['LOCATION_NAME'] + \
-            '/' + grass.gisenv()['MAPSET'] + \
-            '/cell_misc/'
+#            dst_dir = grass.gisenv()['GISDBASE'] + \
+#            '/' + grass.gisenv()['LOCATION_NAME'] + \
+#            '/' + grass.gisenv()['MAPSET'] + \
+#            '/cell_misc/'
 
             # ========================================== Temporary files ====
             tmpfile = grass.tempfile()  # replace with os.getpid?
             tmp = "tmp." + grass.basename(tmpfile)  # use its basename
-            tmp_p6s = grass.tempfile()  # ASCII file
 
-            tmp_cor_out = "%s_cor_out" % tmp  # HPF image
+            tmp_p6s = grass.tempfile()  # 6S Parameters ASCII file
+            tmp_atm_cor = "%s_cor_out" % tmp  # Atmospherically Corrected Img
             # Temporary files ===============================================
 
             p6s.export_ascii(tmp_p6s)
@@ -366,6 +373,13 @@ def main():
             # Process band-wise atmospheric correction with 6s
             msg = "6S parameters:\n\n"
             msg += p6s.parameters
+            g.message(msg)
+
+            # inform about input's range?
+            inp_rng = grass.parse_command('r.info', flags='r', map=inputband)
+            inp_rng['min'] = float(inp_rng['min'])
+            inp_rng['max'] = float(inp_rng['max'])
+            msg = "Input range: %.2f ~ %.2f" % (inp_rng['min'], inp_rng['max'])            
             g.message(msg)
 
             # ---------------------------------------------------------------
@@ -389,19 +403,25 @@ def main():
                 pass
 
             else:
-                grass.debug("Now atcorring")
+                grass.info("Now atcorring")
                 """ """
                 run('i.atcorr',
+                    flags=rad_flg,
                     input=inputband,
                     parameters=tmp_p6s,
-                    output=tmp_cor_out)
+                    output=tmp_atm_cor,
+                    rescale=(0,1))
 
             # inform about output's range?
-            run('r.info', flags='r', map=tmp_cor_out)
+            out_rng = grass.parse_command('r.info', flags='r', map=tmp_atm_cor)
+            out_rng['min'] = float(out_rng['min'])
+            out_rng['max'] = float(out_rng['max'])
+            msg = "Output range: %.2f ~ %.2f" % (out_rng['min'], out_rng['max'])
+            g.message(msg)
 
-        # add suffix to basename & rename end product
-#        cor_nam = ("%s.%s" % (msx.split('@')[0], outputsuffix))
-            run('g.rename', rast=(tmp_cor_out, "ATMCOR_TEST"))
+            # add suffix to basename & rename end product
+            atm_cor_nam = ("%s.%s" % (inputband.split('@')[0], suffix))
+            run('g.rename', rast=(tmp_atm_cor, atm_cor_nam))
 
 
 if __name__ == "__main__":

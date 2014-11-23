@@ -89,7 +89,6 @@ class Parameters:
 
             else:
                 self.vis = float(vis)
-                self.aod = None
 
         elif aod < 0:
             raise ValueError("Invalid AOD value")
@@ -117,6 +116,8 @@ class Parameters:
         self.parameters += str(self.vis) + '%s# %s' % (tabs, P6S['vis']) + '\n'
         if aod > 0 :
             self.parameters += str(self.aod) + '%s# %s' % (tabs, P6S['aod']) + '\n'
+        elif aod == None:
+            pass
         self.parameters += str(self.xps) + '%s# %s' % (tabs, P6S['xps']) + '\n'
         self.parameters += str(self.xpp) + '%s# %s' % (tabs, P6S['xpp']) + '\n'
         self.parameters += str(self.bnd) + '%s# %s' % (tabs, P6S['bnd']) + '\n'
