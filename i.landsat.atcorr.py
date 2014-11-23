@@ -2,15 +2,20 @@
 # -*- coding: utf-8 -*-
 
 """
-MODULE:         i.landsat.atcorr
+ MODULE:        i.landsat.atcorr
 
-AUTHOR(S):      Nikos Alexandris <nik@nikosalexandris.net>
+ AUTHOR(S):     Nikos Alexandris <nik@nikosalexandris.net>
                 Converted from a bash shell script (written in Feb. 2013)
                 Trikala, Nov. 2014
-                Based on a script provided by Yann Chemin
+                Based on an earlier script provided by Yann Chemin
 
-PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
+ PURPOSE:       Scripting i.atcorr for Landsat satellite acquisitions
 
+ COPYRIGHT:    (C) 2013 by the GRASS Development Team
+
+               This program is free software under the GNU General Public
+               License (>=v2). Read the file COPYING that comes with GRASS
+               for details.
 """
 
 #%Module
@@ -347,7 +352,7 @@ def main():
             #   fi
             """
 
-            # Generate the parameterization file (icnd_landsat5)
+            # Generate 6S parameterization file
             p6s = Parameters(geo=geo[sensor],
                              mon=mon, day=day, gmt=gmt, lon=lon, lat=lat,
                              atm=atm,
@@ -356,11 +361,6 @@ def main():
                              aod=aod,
                              xps=xps, xpp=xpp,
                              bnd=sensors[sensor][band])
-
-#            dst_dir = grass.gisenv()['GISDBASE'] + \
-#            '/' + grass.gisenv()['LOCATION_NAME'] + \
-#            '/' + grass.gisenv()['MAPSET'] + \
-#            '/cell_misc/'
 
             # ========================================== Temporary files ====
             tmpfile = grass.tempfile()  # replace with os.getpid?
