@@ -52,9 +52,15 @@ class Parameters:
 
         self.mdg = "%d %d %.2f" % (self.mon, self.day, self.gmt)  # combine
 
-        self.lon = float(lon)  # scene's center longitude
+        if -180 <= float(lon) <= 180:
+            self.lon = float(lon)  # scene's center longitude
+        else:
+            raise ValueError("Invalid Longitude")
 
-        self.lat = float(lat)  # scene's center latitude
+        if -90 <= float(lat) <= 90:
+            self.lat = float(lat)  # scene's center latitude
+        else:
+            raise ValueError("Invalid Latitude")
 
         self.acq = '%s %f %f' % (self.mdg, lon, lat)  # 2nd line of parameters
         if len(self.acq.split(' ')) < 5:
@@ -71,15 +77,25 @@ class Parameters:
         else:
             raise ValueError("Invalid aerosols model index")
 
-        if aod > 0:
-            self.aod = float(aod)
-            self.vis = 0
-        elif aod == 0:
-            self.aod = 0
-            self.vis = -1
+        if not aod < 0:
+
+            if aod > 0:
+                self.vis = 0  # set visibility to 0 if aod value defined
+                self.aod = float(aod)
+
+            elif float(aod) == float(0):
+                self.vis = -1  # set visibility to -1 if aod set to 0
+                self.aod = None
+
+            else:
+                self.vis = float(vis)
+                self.aod = None
+
+        elif aod < 0:
+            raise ValueError("Invalid AOD value")
+
         else:
-            self.vis = float(vis)
-            self.aod = float()
+            self.aod = None
 
         self.xps = float(xps)  # xps <= 0 | xps >= 0 == 'target at sea level'
 
@@ -99,7 +115,7 @@ class Parameters:
         self.parameters += str(self.atm) + '%s# %s' % (tabs, P6S['atm']) + '\n'
         self.parameters += str(self.aer) + '%s# %s' % (tabs, P6S['aer']) + '\n'
         self.parameters += str(self.vis) + '%s# %s' % (tabs, P6S['vis']) + '\n'
-        if aod != None:
+        if aod > 0 :
             self.parameters += str(self.aod) + '%s# %s' % (tabs, P6S['aod']) + '\n'
         self.parameters += str(self.xps) + '%s# %s' % (tabs, P6S['xps']) + '\n'
         self.parameters += str(self.xpp) + '%s# %s' % (tabs, P6S['xpp']) + '\n'

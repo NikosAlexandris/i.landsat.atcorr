@@ -111,7 +111,7 @@ PURPOSE:        Scripting atmospheric correction of Landsat5 TM acquisitions
 #% label: Visibility
 #% description: Visibility [km] or Aerosols Optical Depth at 550nm (refer to i.atcorr's manual)
 #% guisection: Parameters
-#% required: yes
+#% required: no
 #%end
 
 #%option
@@ -275,11 +275,11 @@ def main():
     # Scene's center coordinates
     cll = grass.parse_command('g.region', flags='clg')
     lon = float(cll['center_long'])  # Center Longitude [decimal degrees]
-    lat = float(cll['center_lat']) # Center Latitude [decimal degrees]
+    lat = float(cll['center_lat'])  # Center Latitude [decimal degrees]
 
     msg += str(mon) + ' ' + str(day) + ' ' + str(gmt) + ' ' + \
         str(lon) + ' ' + str(lat)
-    g.message (msg)
+    g.message(msg)
 
     # -----------------------------------------------------------------------
     # Mapsets are Scenes. Read'em all!
@@ -287,48 +287,49 @@ def main():
 
     if mapsets == 'all':
         scenes = grass.mapsets()
+        print scenes
 
     elif mapsets == '.':
-        scenes = mapset
+        scenes = [mapset]
+        print scenes
 
     else:
         scenes = mapsets.split(',')
+        print scenes
 
     if 'PERMANENT' in scenes:
         scenes.remove('PERMANENT')
 
     # access only to specific mapsets!
-    
+    msg = "\n|* Performing atmospheric correction for scenes:  %s" % scenes
+    g.message(msg)
 
     for scene in scenes:
-        
-        msg = "\n|* Performing atmospheric correction for scene:  %s" % scene
-        g.message(msg)
 
         # ensure access only to *current* mapset
         run('g.mapsets', mapset='.', operation='set')
 
         # scene's basename as in GRASS' db
         basename = grass.read_command('g.mapset', flags='p')
-        msg = "Processing scene:  %s" % basename
+        msg = "   | Processing scene:  %s" % basename
         g.message(msg)
 
         # loop over Landsat bands in question
         for band in sensors[sensor].keys():
 
             inputband = prefix + str(band)
-            msg = "\n|> Processing band:  %s" % inputband
+            msg = "\n>>> Processing band:  %s" % inputband
             g.message(msg)
 
             """
             Things to check:
-            
+
             # elaborate on Visibillity -- lines below from YannC's code
             # # vis_list=(10 10 8 9.7 15 8 7 10 10 9.7 12 9.7 7 12 12 12 3 15 12 9.7 6 15)
             # # vis_len=${#vis_list[*]}
             # # echo $vis_len
             # # i=0
-            
+
             # AOD_Winter=0.111
             # AOD_Summer=0.222
             # AOD="${AOD_Winter}" # set to winter AOD
@@ -347,7 +348,6 @@ def main():
                        xps=xps, xpp=xpp,
                        bnd=sensors[sensor][band])
 
-            
             dst_dir = grass.gisenv()['GISDBASE'] + \
             '/' + grass.gisenv()['LOCATION_NAME'] + \
             '/' + grass.gisenv()['MAPSET'] + \
@@ -364,7 +364,7 @@ def main():
             p6s.export_ascii(tmp_p6s)
 
             # Process band-wise atmospheric correction with 6s
-            msg = "Using the following parameters:\n\n"
+            msg = "6S parameters:\n\n"
             msg += p6s.parameters
             g.message(msg)
 
@@ -391,13 +391,6 @@ def main():
             else:
                 grass.debug("Now atcorring")
                 """ """
-                print rad_flg
-                print "******"
-                print inputband
-                print tmp_p6s
-                print tmp_cor_out
-
-                print "ATMCOR-ing band: ", inputband
                 run('i.atcorr',
                     input=inputband,
                     parameters=tmp_p6s,
