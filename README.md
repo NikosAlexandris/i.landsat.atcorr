@@ -1,20 +1,21 @@
 Automatising atmospheric correction of Landsat scenes  --  **Work under progress**
 
 ```
-+-----------------------------------------+
-|                                         |
-| Digital Numbers                         |
-|        |                                |
-|  +-----v-----+                          |
-|  |  i.*.toar | (-r) --> Radiance        |
-|  +-----+-----+               |          |
-|        v               +-----v----+     |
-|    Reflectance (-r) ---> i.atcorr |     |
-|                        +-----+----+     |
-|                              v          |
-|                 "Corrected" Reflectance |
-|                                         |
-+-----------------------------------------+
++--------------------------------------------------------------------------------+
+|                                                                                |
+| Digital Numbers                                                                |
+|        |                                                                       |
+|  +-----v-----+                                                                 |
+|  |  i.*.toar | -->  Reflectance                                                |
+|  +-----+-----+     (uncorrected)+- (DOS methods)+-+                            |
+|        |                 +                        |                            |
+|      (-r)              (-r)                       +--> "Corrected" Reflectance |
+|        |                 |                        |                            |
+|        v           +-----v----+                   |                            |
+|     Radiance   -- -> i.atcorr +-------------------+                            |
+|                    +----------+                                                |
+|                                                                                |
++--------------------------------------------------------------------------------+
 ```
 
 Notes
