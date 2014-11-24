@@ -1,5 +1,22 @@
 Automatising atmospheric correction of Landsat scenes  --  **Work under progress**
 
+```
++-----------------------------------------+
+|                                         |
+| Digital Numbers                         |
+|        |                                |
+|  +-----v-----+                          |
+|  |  i.*.toar | (-r) --> Radiance        |
+|  +-----+-----+               |          |
+|        v               +-----v----+     |
+|    Reflectance (-r) ---> i.atcorr |     |
+|                        +-----+----+     |
+|                              v          |
+|                 "Corrected" Reflectance |
+|                                         |
++-----------------------------------------+
+```
+
 Notes
 =====
 
