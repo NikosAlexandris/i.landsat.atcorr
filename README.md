@@ -18,7 +18,7 @@ Tested for:
 - Landsat7 ETM+ using <http://earthexplorer.usgs.gov/metadata/3372/LE70160352000091EDC00/> found in <http://grass.osgeo.org/sampledata/north_carolina/nc_spm_08_grass7.zip>
 
 ```
-# i.landsat.toar likes common 'input_prefix'es
+# i.landsat.toar likes common 'input_prefix'es and a _single_ band numbering scheme
 g.copy rast=lsat7_2000_10,lsat7_2000_1
 g.copy rast=lsat7_2000_20,lsat7_2000_2
 g.copy rast=lsat7_2000_30,lsat7_2000_3
