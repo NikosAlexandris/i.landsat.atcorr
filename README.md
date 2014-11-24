@@ -3,7 +3,7 @@ Automatising atmospheric correction of Landsat scenes  --  **Work under progress
 Notes
 =====
 
-* `i.landsat.toar` derives, *by default*, Spectral Reflectance values (unitless), whether uncorrected or corrected (by some of the possible DOS methods).
+* `i.landsat.toar` derives, *by default*, Spectral Reflectance values (unitless, ranging in [0,1]), whether uncorrected or corrected (by some of the possible DOS methods).
 
 * `i.atcorr` treats, *by default*, input bands as Spectral Radiance.
 
