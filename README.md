@@ -1,25 +1,42 @@
 Automatising atmospheric correction of Landsat scenes  --  **Work under progress**
 
+Usage
+=====
+
+*To complete...*
+
+## One Mapset per Landsat scene
+Using this script, pre-requires importing Landsat scenes each in its own Mapset
+using the import script found in
+<http://grasswiki.osgeo.org/wiki/LANDSAT#Automated_data_import>. The latter
+copies the respective acquisition metadata file (MTL.txt) in the `cell_misc`
+directory of the corresponding Mapset. 
+
+
+Notes
+=====
+
+An overview of options to get *corrected* spectral reflectance values:
+
 ```
 +--------------------------------------------------------------------------------+
 |                                                                                |
 | Digital Numbers                                                                |
 |        |                                                                       |
 |  +-----v-----+                                                                 |
-|  |  i.*.toar | -->  Reflectance                                                |
-|  +-----+-----+     (uncorrected)+- (DOS methods)+-+                            |
+|  |  i.*.toar | ---> Reflectance                                                |
+|  +-----+-----+     (uncorrected)~~~(DOS methods)--+                            |
 |        |                 +                        |                            |
-|      (-r)              (-r)                       +--> "Corrected" Reflectance |
+|    (-r flag)       (-r flag)                      +--> "Corrected" Reflectance |
 |        |                 |                        |                            |
 |        v           +-----v----+                   |                            |
-|     Radiance   -- -> i.atcorr +-------------------+                            |
+|     Radiance   ----> i.atcorr +-------------------+                            |
 |                    +----------+                                                |
 |                                                                                |
 +--------------------------------------------------------------------------------+
 ```
 
-Notes
-=====
+* `i.landsat.atcorr` *requires* the metadata filename's prefix to be identical to the name of the *current* Mapset.
 
 * `i.landsat.toar` derives, *by default*, Spectral Reflectance values (unitless, ranging in [0,1]), whether uncorrected or corrected (by some of the possible DOS methods).
 
@@ -27,7 +44,7 @@ Notes
 
 * To make things work, either derive Spectral Radiance values via `i.landsat.toar` by instructing the `-r` flag, or let `i.atcorr` treat the input as Spectral Reflectance via its own `-r` flag!
 
-Confusing? ;-) 
+Confusing? ;-)
 
 Tested for:
 
