@@ -1,9 +1,9 @@
-Automatising atmospheric correction of Landsat scenes
+Automatising atmospheric correction of Landsat scenes  --  **Work under progress**
 
 Notes
 =====
 
-* `i.landsat.toar` derives, *by default*, Spectral Reflectance values (unitless), whether uncorrected or corrected (by some of the possible DOS methods).
+* `i.landsat.toar` derives, *by default*, Spectral Reflectance values (unitless, ranging in [0,1]), whether uncorrected or corrected (by some of the possible DOS methods).
 
 * `i.atcorr` treats, *by default*, input bands as Spectral Radiance.
 
@@ -17,8 +17,8 @@ Tested for:
 
 - Landsat7 ETM+ using <http://earthexplorer.usgs.gov/metadata/3372/LE70160352000091EDC00/> found in <http://grass.osgeo.org/sampledata/north_carolina/nc_spm_08_grass7.zip>
 
-'''
-# i.landsat.toar likes common 'input_prefix'es
+```
+# i.landsat.toar likes common 'input_prefix'es and a _single_ band numbering scheme
 g.copy rast=lsat7_2000_10,lsat7_2000_1
 g.copy rast=lsat7_2000_20,lsat7_2000_2
 g.copy rast=lsat7_2000_30,lsat7_2000_3
@@ -85,7 +85,7 @@ max=-nan
 for Band in $(g.list type=rast pattern=*AtmCor*); do r.colors ${Band} color=grey1.0; done
 
 # then check visually...
-'''
+```
 
 
 To Do
