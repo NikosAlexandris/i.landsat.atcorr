@@ -19,21 +19,21 @@ Notes
 An overview of options to get *corrected* spectral reflectance values:
 
 ```
-+--------------------------------------------------------------------------------+
-|                                                                                |
-| Digital Numbers                                                                |
-|        |                                                                       |
-|  +-----v-----+                                                                 |
-|  |  i.*.toar | ---> Reflectance                                                |
-|  +-----+-----+     (uncorrected)~~~(DOS methods)--+                            |
-|        |                 +                        |                            |
-|    (-r flag)       (-r flag)                      +--> "Corrected" Reflectance |
-|        |                 |                        |                            |
-|        v           +-----v----+                   |                            |
-|     Radiance   ----> i.atcorr +-------------------+                            |
-|                    +----------+                                                |
-|                                                                                |
-+--------------------------------------------------------------------------------+
++------------------------------------------------------------------------------+
+|                                                                              |
+| Digital Numbers                                                              |
+|        |                                                                     |
+|  +-----v-----+                                                               |
+|  |  i.*.toar | ---> Reflectance                                              |
+|  +-----+-----+     (uncorrected)~~~(DOS methods)--+                          |
+|        |                 +                        |                          |
+|    (-r flag)       (-r flag)                      +--> "Corrected"           |
+|        |                 |                        |     Reflectance          |
+|        v           +-----v----+                   |                          |
+|     Radiance   ----> i.atcorr +-------------------+                          |
+|                    +----------+                                              |
+|                                                                              |
++------------------------------------------------------------------------------+
 ```
 
 * `i.landsat.atcorr` *requires* the metadata filename's prefix to be identical to the name of the *current* Mapset.
