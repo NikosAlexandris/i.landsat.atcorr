@@ -55,7 +55,7 @@
 #% label: Mapsets corresponding to scenes
 #% description: Scenes to process
 #% options: all,current,selected
-#% descriptions: all;All mapsets except of PERMANENT;.;Current mapset;selected;Only selected mapsets
+#% descriptions: all;All mapsets except of PERMANENT;current;Current mapset;selected;Only selected mapsets
 #% answer: all
 #% required: no
 #%end
