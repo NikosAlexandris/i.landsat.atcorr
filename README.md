@@ -11,11 +11,14 @@ Notes
 
 Confusing? ;-) 
 
-To Do
-=====
 Tested for:
 
 - Landsat8 OLI using LC81840332014226LGN00:  Works. For example `i.landsat.atcorr -r sensor=oli mapsets=. inputprefix=B.Rad. mtl=cell_misc/LC81840332014226LGN00_MTL.txt atm=3 aer=5 aod=.111 alt=-.15 --v --o`. Note, some parameters were random.
+
+To Do
+=====
+
+- Add support for .met metadata files (older format of Landsat metadata files)
 
 To test for:
 

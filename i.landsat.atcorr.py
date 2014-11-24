@@ -34,7 +34,7 @@
 #%end
 
 
-# Get sensor from the MTL file! ------------------------------------ To Do --
+# Get sensor from the MetaData file! ------------------------------------ To Do --
 #%option
 #% key: sensor
 #% key_desc: Sensor
@@ -54,7 +54,7 @@
 #% type: string
 #% label: Mapsets corresponding to scenes
 #% description: Scenes to process
-#% options: all,.,selected
+#% options: all,current,selected
 #% descriptions: all;All mapsets except of PERMANENT;.;Current mapset;selected;Only selected mapsets
 #% answer: all
 #% required: no
@@ -80,11 +80,11 @@
 #%end
 
 #%option
-#% key: mtl
-#% key_desc: MTL file
+#% key: metafile
+#% key_desc: Metadata file
 #% type: string
-#% label: Acquisition's metadata file (MTL)
-#% description: Metadata file that accompanies the Landsat acquisition
+#% label: Acquisition's metadata file ()
+#% description: Landsat acquisition metadata file (.met or MTL.txt)
 #% required: yes
 #%end
 
@@ -221,7 +221,7 @@ def main():
     prefix = options['inputprefix']
     suffix = options['outputsuffix']
 
-    mtl = options['mtl']
+    metafile = options['metafile']
     atm = int(options['atm'])  # Atmospheric model [index]
     aer = int(options['aer'])  # Aerosols model [index]
 
@@ -262,13 +262,13 @@ def main():
 #        grass.fatal(_(msg))
 
     else:
-        mtl = mapset + '_MTL.txt'
-        result = grass.find_file(element='cell_misc', name=mtl, mapset='.')
+        metafile = mapset + '_MTL.txt'
+        result = grass.find_file(element='cell_misc', name=metafile, mapset='.')
         if not result['file']:
             grass.fatal("The metadata file <%s> is not in GRASS' data base!"
-                        % mtl)
+                        % metafile)
         else:
-            mtl = result['file']
+            metafile = result['file']
 
     # -----------------------------------------------------------------------
     # Acquisition's metadata
@@ -279,14 +279,14 @@ def main():
     # Month, day
     date = grass.parse_command('i.landsat.toar', flags='p',
                                input='dummy', output='dummy',
-                               metfile=mtl, lsatmet='date')
+                               metfile=metafile, lsatmet='date')
     mon = int(date['date'][5:7])  # Month of acquisition
     day = int(date['date'][8:10])  # Day of acquisition
 
     # GMT in decimal hours
     gmt = grass.read_command('i.landsat.toar', flags='p',
                              input='dummy', output='dummy',
-                             metfile=mtl, lsatmet='time')
+                             metfile=metafile, lsatmet='time')
     gmt = float(gmt.rstrip('\n'))
 
     # Scene's center coordinates
@@ -305,7 +305,7 @@ def main():
     if mapsets == 'all':
         scenes = grass.mapsets()
 
-    elif mapsets == '.':
+    elif mapsets == 'current':
         scenes = [mapset]
 
     else:
