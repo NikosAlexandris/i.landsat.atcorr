@@ -27,10 +27,10 @@ An overview of options to get *corrected* spectral reflectance values:
 |  |  i.*.toar | ---> Reflectance                                              |
 |  +-----+-----+     (uncorrected)~~~(DOS methods)--+                          |
 |        |                 +                        |                          |
-|    (-r flag)       (-r flag)                      +--> "Corrected"           |
+|    (-r flag)         (-r flag)                    +--> "Corrected"           |
 |        |                 |                        |     Reflectance          |
 |        v           +-----v----+                   |                          |
-|     Radiance   ----> i.atcorr +-------------------+                          |
+|     Radiance ------> i.atcorr +-------------------+                          |
 |                    +----------+                                              |
 |                                                                              |
 +------------------------------------------------------------------------------+
