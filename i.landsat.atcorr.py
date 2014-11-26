@@ -221,7 +221,7 @@ def main():
     prefix = options['inputprefix']
     suffix = options['outputsuffix']
 
-    metafile = options['metafile']
+    metafile = grass.basename(options['metafile'])
     atm = int(options['atm'])  # Atmospheric model [index]
     aer = int(options['aer'])  # Aerosols model [index]
 
@@ -262,7 +262,7 @@ def main():
 #        grass.fatal(_(msg))
 
     else:
-        metafile = mapset + '_MTL.txt'
+#        metafile = mapset + '_MTL.txt'
         result = grass.find_file(element='cell_misc', name=metafile, mapset='.')
         if not result['file']:
             grass.fatal("The metadata file <%s> is not in GRASS' data base!"
