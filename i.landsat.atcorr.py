@@ -61,7 +61,7 @@
 #%end
 
 #%option G_OPT_R_BASENAME_INPUT
-#% key: inputprefix
+#% key: input_prefix
 #% key_desc: prefix string
 #% type: string
 #% label: Prefix of input bands
@@ -70,7 +70,7 @@
 #%end
 
 #%option G_OPT_R_BASENAME_OUTPUT
-#% key: outputsuffix
+#% key: output_suffix
 #% key_desc: suffix string
 #% type: string
 #% label: Suffix for output image(s)
@@ -89,7 +89,7 @@
 #%end
 
 #%option
-#% key: atm
+#% key: atmospheric_model
 #% key_desc: index
 #% type: integer
 #% label: Atmospheric model
@@ -101,7 +101,7 @@
 #%end
 
 #%option
-#% key: aer
+#% key: aerosols_model
 #% key_desc: index
 #% type: integer
 #% label: Aerosols model
@@ -113,7 +113,7 @@
 #%end
 
 #%option
-#% key: vis
+#% key: visual_range
 #% key_desc: distance or concentration
 #% type: double
 #% label: Visibility
@@ -127,13 +127,13 @@
 #% key_desc: concentration
 #% type: double
 #% label: AOD
-#% description: Aerosols Optical Depth at 550nm (refer to i.atcorr's manual)
+#% description: Aerosols Optical Depth at 550nm (refer to i.atcorr's manual). Based on the metadata, defaults to 0.111 for winter or 0.222 for summer acquisitions.
 #% guisection: Parameters
 #% required: no
 #%end
 
 #%option
-#% key: alt
+#% key: altitude
 #% key_desc: altitude
 #% type: double
 #% label: Target or Sensor Altitude
@@ -153,7 +153,7 @@
 #%end
 
 #%option
-#% key: visibility
+#% key: visibility_map
 #% key_desc: visibility map
 #% type: double
 #% label: Visibility map
@@ -218,28 +218,24 @@ def main():
     sensor = options['sensor']
 
     mapsets = options['mapsets']
-    prefix = options['inputprefix']
-    suffix = options['outputsuffix']
+    prefix = options['input_prefix']
+    suffix = options['output_suffix']
 
     metafile = grass.basename(options['metafile'])
-    atm = int(options['atm'])  # Atmospheric model [index]
-    aer = int(options['aer'])  # Aerosols model [index]
+    atm = int(options['atmospheric_model'])  # Atmospheric model [index]
+    aer = int(options['aerosols_model'])  # Aerosols model [index]
 
-    vis = options['vis']  # Visibility [km]
-    aod = options['aod']
-    if not aod:
-        aod = None
-    else:
-        aod = float(options['aod'])  # Aerosol Optical Depth at 550nm
+    vis = options['visual_range']  # Visibility [km]
+    aod = options['aod']  # Aerosol Optical Depth at 550nm
 
-    xps = options['alt']  # Mean Target Altitude [negative km]
+    xps = options['altitude']  # Mean Target Altitude [negative km]
     if not xps:
         msg = "Note, this value will be overwritten if a DEM raster has been "\
               "defined as an input!"
         g.message(msg)
 
     elevation = options['elevation']
-    visibility = options['visibility']
+    visibility = options['visibility_map']
 
     radiance = flags['r']
     if radiance:
@@ -262,7 +258,6 @@ def main():
 #        grass.fatal(_(msg))
 
     else:
-#        metafile = mapset + '_MTL.txt'
         result = grass.find_file(element='cell_misc', name=metafile, mapset='.')
         if not result['file']:
             grass.fatal("The metadata file <%s> is not in GRASS' data base!"
@@ -343,14 +338,16 @@ def main():
             # # vis_len=${#vis_list[*]}
             # # echo $vis_len
             # # i=0
-
-            # AOD_Winter=0.111
-            # AOD_Summer=0.222
-            # AOD="${AOD_Winter}" # set to winter AOD
-            #   if [ ${Month} -gt 4 ] && [ ${Month} -lt 10 ]; # compare month of acquisition
-            #       then AOD="${AOD_Summer}"  # set to summer AOD if...
-            #   fi
             """
+
+            # sane aod defaults?
+            if not aod:
+                if 4 < mon < 10:
+                    aod = 0.222  # summer
+                else:
+                    aod = 0.111  # winter
+            else:
+                aod = float(options['aod'])
 
             # Generate 6S parameterization file
             p6s = Parameters(geo=geo[sensor],
@@ -381,7 +378,7 @@ def main():
             inp_rng = grass.parse_command('r.info', flags='r', map=inputband)
             inp_rng['min'] = float(inp_rng['min'])
             inp_rng['max'] = float(inp_rng['max'])
-            msg = "Input range: %.2f ~ %.2f" % (inp_rng['min'], inp_rng['max'])            
+            msg = "Input range: %.2f ~ %.2f" % (inp_rng['min'], inp_rng['max'])
             g.message(msg)
 
             # ---------------------------------------------------------------
@@ -411,7 +408,7 @@ def main():
                     range=(inp_rng['min'], inp_rng['max']),
                     parameters=tmp_p6s,
                     output=tmp_atm_cor,
-                    rescale=(0,1))
+                    rescale=(0, 1))
 
             # inform about output's range?
             out_rng = grass.parse_command('r.info', flags='r', map=tmp_atm_cor)
