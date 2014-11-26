@@ -235,7 +235,7 @@ def main():
         g.message(msg)
 
     elevation = options['elevation']
-    visibility = options['visibility_map']
+    vis_map = options['visibility_map']
 
     radiance = flags['r']
     if radiance:
@@ -258,7 +258,9 @@ def main():
 #        grass.fatal(_(msg))
 
     else:
-        result = grass.find_file(element='cell_misc', name=metafile, mapset='.')
+        result = grass.find_file(element='cell_misc',
+                                 name=metafile,
+                                 mapset='.')
         if not result['file']:
             grass.fatal("The metadata file <%s> is not in GRASS' data base!"
                         % metafile)
@@ -330,16 +332,6 @@ def main():
             msg = "\n>>> Processing band:  %s" % inputband
             g.message(msg)
 
-            """
-            Things to check:
-
-            # elaborate on Visibillity -- lines below from YannC's code
-            # # vis_list=(10 10 8 9.7 15 8 7 10 10 9.7 12 9.7 7 12 12 12 3 15 12 9.7 6 15)
-            # # vis_len=${#vis_list[*]}
-            # # echo $vis_len
-            # # i=0
-            """
-
             # sane aod defaults?
             if not aod:
                 if 4 < mon < 10:
@@ -385,23 +377,30 @@ def main():
             # Applying 6S Atmospheric Correction algorithm
             # ---------------------------------------------------------------
 
-            if visibility:
-                pass
+            if vis_map:
+                run('i.atcorr',
+                    flags=rad_flg,
+                    input=inputband,
+                    range=(inp_rng['min'], inp_rng['max']),
+                    parameters=tmp_p6s,
+                    visibility=vis_map,
+                    output=tmp_atm_cor,
+                    rescale=(0, 1))
 
             if elevation:
                 """Using an elevation map.
                 Attention: does the elevation cover the area of the images?"""
-#                run('i.atcorr', flags=rad_flg,
-#                    input=prefix_band,
-#                    range=(0,1),
-#                    elevation=elevation,
-#                    parameters=tmp_p6s,
-#                    output=tmp_cor_out,
-#                    rescale=(0,1))
-                pass
+                run('i.atcorr',
+                    flags=rad_flg,
+                    input=inputband,
+                    range=(inp_rng['min'], inp_rng['max']),
+                    parameters=tmp_p6s,
+                    elevation=elevation,
+                    output=tmp_atm_cor,
+                    rescale=(0, 1))
 
             else:
-                """ """
+                """Output is reflectance ranging in [0,1]"""
                 run('i.atcorr',
                     flags=rad_flg,
                     input=inputband,
@@ -414,7 +413,8 @@ def main():
             out_rng = grass.parse_command('r.info', flags='r', map=tmp_atm_cor)
             out_rng['min'] = float(out_rng['min'])
             out_rng['max'] = float(out_rng['max'])
-            msg = "Output range: %.2f ~ %.2f" % (out_rng['min'], out_rng['max'])
+            msg = "Output range: %.2f ~ %.2f" \
+                % (out_rng['min'], out_rng['max'])
             g.message(msg)
 
             # add suffix to basename & rename end product
