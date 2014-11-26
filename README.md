@@ -32,7 +32,7 @@ An overview of options to get *corrected* spectral reflectance values:
 |        v           +-----v----+                   |                          |
 |     Radiance ------> i.atcorr +-------------------+                          |
 |                    +----------+                                              |
-|                                                                              |
+|                                                                        ;-)   |
 +------------------------------------------------------------------------------+
 ```
 
@@ -44,9 +44,12 @@ An overview of options to get *corrected* spectral reflectance values:
 
 * To make things work, either derive Spectral Radiance values via `i.landsat.toar` by instructing the `-r` flag, or let `i.atcorr` treat the input as Spectral Reflectance via its own `-r` flag!
 
-Confusing? ;-)
+* The value for aerosols optical depth (AOD), is set to `0.111` for winter and `0.222` for summer acquisitions to get going.
 
-Tested for:
+* Tested for Landsat8 OLI, Landsat7 ETM+, Landsat5 TM
+
+Examples
+========
 
 - Landsat8 OLI using LC81840332014226LGN00:  Works. For example `i.landsat.atcorr -r sensor=oli mapsets=. inputprefix=B.Rad. mtl=cell_misc/LC81840332014226LGN00_MTL.txt atm=3 aer=5 aod=.111 alt=-.15 --v --o`. Note, some parameters were random.
 
@@ -122,13 +125,97 @@ for Band in $(g.list type=rast pattern=*AtmCor*); do r.colors ${Band} color=grey
 # then check visually...
 ```
 
+- Landsat5 TM
+
+```
+# outside of grass
+grass70 -c LT51830332007136MOR00/L5183033_03320070516_B10.TIF /grassdb/landsat_utm_z34n
+
+# inside grass (PERMANENT Mapset), import bands (will copy MTL file in cell_misc)
+python import_landsat_custom.py LT51830332007136MOR00
+
+# exit & re-launch grass session (or change mapset!)
+exit
+grass70 landsat_utm_z34n/LT51830332007136MOR00/
+
+# rename bands -- i.landsat.toar likes single-band-number-indices!
+g.copy rast=B10,B1
+!!:gs/1/2
+!!:gs/2/3
+!!:gs/3/4
+!!:gs/4/5
+!!:gs/5/6
+!!:gs/6/7
+
+# check range of DN
+for B in `g.list type=rast pat=[B]*[1234567]`; do r.info -r ${B}; done
+
+min=0
+max=255
+min=0
+max=255
+min=0
+max=255
+min=0
+max=255
+min=0
+max=255
+min=0
+max=220
+min=0
+max=255
+
+# convert to spectral radiance (remember: MTL file stored in cell_misc)
+i.landsat.toar input_prefix=B output_prefix=Rad. metfile=/geo/grassdb/landsat_utm_z34n/LT51830332007136MOR00/cell_misc/L5183033_03320070516_MTL.txt
+
+# check output!
+for B in `g.list type=rast pat=[R]*[1234567]`; do r.info -r ${B}; done
+
+min=-0.00279458552443127
+max=0.354838819878444
+min=-0.00559605803399942
+max=0.719211683947109
+min=-0.00270894064952713
+max=0.611248146559968
+min=-0.0052442312574179
+max=0.767533184032686
+min=-0.00619195664744627
+max=0.505397542575344
+min=203.371307953013
+max=328.364927858343
+min=-0.00669027308052299
+max=0.735930038857529
+
+# loop i.atcorr over all bands
+i.landsat.atcorr sensor=tm input_prefix=Rad. output=AtmCor metafile=/geo/grassdb/landsat_utm_z34n/LT51830332007136MOR00/cell_misc/L5183033_03320070516_MTL.txt atm=2 aer=1 visual=11 aod=.111 alt=.1 --o --v
+
+# check output ranges
+for B in `g.list type=rast pat=*Atm*`; do r.info -r ${B}; done
+
+min=1.58162e-07
+max=0.001280316
+min=8.194314e-07
+max=0.002430856
+min=1.210253e-06
+max=0.002343489
+min=2.804616e-06
+max=0.002441876
+min=3.624363e-07
+max=0.01023893
+min=1.828974e-05
+max=0.04095656
+```
 
 To Do
 =====
 
-- Add support for .met metadata files (older format of Landsat metadata files)
+- Does `i.atcorr` support the old `.met` files properly?
 
 To test for:
 
-- Landsat5 TM
 - Landsat4 MSS
+
+References
+==========
+
+- To add
