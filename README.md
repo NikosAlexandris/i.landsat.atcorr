@@ -51,7 +51,9 @@ An overview of options to get *corrected* spectral reflectance values:
 Examples
 ========
 
-- Landsat8 OLI using LC81840332014226LGN00:  Works. For example `i.landsat.atcorr -r sensor=oli mapsets=. inputprefix=B.Rad. mtl=cell_misc/LC81840332014226LGN00_MTL.txt atm=3 aer=5 aod=.111 alt=-.15 --v --o`. Note, some parameters were random.
+The following are simply proof-of-concept examples. Parameters fed, such as `aod=` are arbitrarily chosen.
+
+- Landsat8 OLI using LC81840332014226LGN00:  Works. For example `i.landsat.atcorr -r sensor=oli mapsets=. inputprefix=B.Rad. mtl=cell_misc/LC81840332014226LGN00_MTL.txt atm=3 aer=5 aod=.111 alt=-.15 --v --o`.
 
 - Landsat7 ETM+ using <http://earthexplorer.usgs.gov/metadata/3372/LE70160352000091EDC00/> found in <http://grass.osgeo.org/sampledata/north_carolina/nc_spm_08_grass7.zip>
 
