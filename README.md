@@ -1,4 +1,4 @@
-Automatising atmospheric correction of Landsat scenes  --  **Work under progress**
+Automatising atmospheric correction of Landsat scenes  --  **Work under progress**, option names for the module might change!
 
 Usage
 =====
