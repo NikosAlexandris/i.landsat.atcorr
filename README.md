@@ -215,7 +215,11 @@ To test for:
 
 - Landsat4 MSS
 
+- Do entries in i.atcorr for mss cover all of the mss'es? Official band designations differ for "mss1-3" and "mss4-5". 
+
 References
 ==========
 
-- To add
+- <http://landsat.usgs.gov/band_designations_landsat_satellites.php>
+
+- To add more
