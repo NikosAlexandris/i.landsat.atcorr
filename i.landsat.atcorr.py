@@ -41,8 +41,8 @@
 #% type: string
 #% label: Landsat sensor
 #% description: Landsat sensor selecting spectral conditions indexing
-#% options: tm,mss,etm,oli
-#% descriptions: tm;Landsat5 Thematic Mapper;mss;Landsat5 Multi-Spectral Scanner;etm;Landsat7 Enhanced Thematic Mapper;oli;Landsat8 OLI
+#% options: mss, mss4, tm, etm, oli
+#% descriptions: mss;mss1, mss2 or mss3: Multi Spectral Scanner on Landsat1-3. Bands 4, 5, 6, 7;mss4;or mss5: MSS on Landsat4-5. Bands 1, 2, 3, 4;tm;tm4 or tm5: Thematic Mapper on Landsat5. Bands 1, 2, 3, 4, 5, 6, 7;etm;Enhanced Thematic Mapper on Landsat7. Bands 1, 2, 3, 4, 5, 6, 7;oli;Operational Land Imager & Thermal Infrared Sensor on Landsat8. Bands 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 #% required: yes
 #% multiple: no
 #%end
@@ -52,11 +52,11 @@
 #% key: mapsets
 #% key_desc: Mapsets
 #% type: string
-#% label: Mapsets corresponding to scenes
-#% description: Scenes to process
+#% label: Mapsets to process
+#% description: Scenes to process given bands of a scene imported in independent Mapsets
 #% options: all,current,selected
 #% descriptions: all;All mapsets except of PERMANENT;current;Current mapset;selected;Only selected mapsets
-#% answer: all
+#% answer: current
 #% required: no
 #%end
 
@@ -189,8 +189,8 @@ xpp = -1000  # Satellite borne [-1000]
 
 # Spectral conditions index
 sensors = {
-'tm':  {1: 25, 2: 26, 3: 27, 4: 28, 5: 29, 7: 30},
 'mss': {1: 31, 2: 32, 3: 33, 4: 34},
+'tm':  {1: 25, 2: 26, 3: 27, 4: 28, 5: 29, 7: 30},
 'etm': {1: 61, 2: 62, 3: 63, 4: 64, 5: 65, 7: 66, 8: 67},
 'oli': {1: 115, 2: 116, 3: 117, 4: 118, 8: 119, 5: 120, 9: 121, 6: 122, 7: 123}
 }
@@ -377,7 +377,7 @@ def main():
             # Applying 6S Atmospheric Correction algorithm
             # ---------------------------------------------------------------
 
-            if vis_map:
+            if vis_map and (not elevation):
                 run('i.atcorr',
                     flags=rad_flg,
                     input=inputband,
@@ -387,7 +387,7 @@ def main():
                     output=tmp_atm_cor,
                     rescale=(0, 1))
 
-            if elevation:
+            elif elevation and (not vis_map):
                 """Using an elevation map.
                 Attention: does the elevation cover the area of the images?"""
                 run('i.atcorr',
@@ -399,6 +399,19 @@ def main():
                     output=tmp_atm_cor,
                     rescale=(0, 1))
 
+            elif elevation and vis_map:
+                """Using an elevation map.
+                Attention: does the elevation cover the area of the images?"""
+                run('i.atcorr',
+                    flags=rad_flg,
+                    input=inputband,
+                    range=(inp_rng['min'], inp_rng['max']),
+                    parameters=tmp_p6s,
+                    visibility=vis_map,
+                    elevation=elevation,
+                    output=tmp_atm_cor,
+                    rescale=(0, 1))
+
             else:
                 """Output is reflectance ranging in [0,1]"""
                 run('i.atcorr',
@@ -406,6 +419,8 @@ def main():
                     input=inputband,
                     range=(inp_rng['min'], inp_rng['max']),
                     parameters=tmp_p6s,
+                    visibility=vis_map,
+                    elevation=elevation,
                     output=tmp_atm_cor,
                     rescale=(0, 1))
 
