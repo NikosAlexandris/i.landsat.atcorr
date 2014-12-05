@@ -6,11 +6,11 @@ Usage
 *To complete...*
 
 ## One Mapset per Landsat scene
-Using this script, pre-requires importing Landsat scenes each in its own Mapset
-using the import script found in
-<http://grasswiki.osgeo.org/wiki/LANDSAT#Automated_data_import>. The latter
-copies the respective acquisition metadata file (MTL.txt) in the `cell_misc`
-directory of the corresponding Mapset. 
+Using this script, pre-requires importing Landsat scenes each in its own Mapset.
+This can be performed using the import script from
+<https://github.com/NikosAlexandris/i.landsat.import>. The latter copies the
+respective acquisition metadata file (MTL.txt) in the `cell_misc` directory of
+the corresponding Mapset. 
 
 
 Notes
