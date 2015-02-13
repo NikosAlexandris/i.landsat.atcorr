@@ -42,7 +42,9 @@ An overview of options to get *corrected* spectral reflectance values:
 
 * `i.atcorr` treats, *by default*, input bands as Spectral Radiance.
 
-* To make things work, either derive Spectral Radiance values via `i.landsat.toar` by instructing the `-r` flag, or let `i.atcorr` treat the input as Spectral Reflectance via its own `-r` flag!
+* To make things work,
+  * either derive Spectral Radiance values via `i.landsat.toar` by instructing the `-r` flag,
+  * or let `i.atcorr` treat the input as Spectral Reflectance via its own `-r` flag!
 
 * The value for aerosols optical depth (AOD), is set to `0.111` for winter and `0.222` for summer acquisitions to get going.
 
