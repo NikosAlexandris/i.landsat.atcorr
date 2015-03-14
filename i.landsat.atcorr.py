@@ -65,7 +65,7 @@
 #% key_desc: prefix string
 #% type: string
 #% label: Prefix of input bands
-#% description: Landsat5 TM bands imported in GRASS' data base begin with this prefix
+#% description: Prefix of Landsat bands imported in GRASS' data base
 #% required: yes
 #%end
 
