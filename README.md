@@ -1,4 +1,4 @@
-Automatising atmospheric correction of Landsat scenes  --  **Work under progress**
+Automatising atmospheric correction of Landsat scenes  --  **Work under progress**, option names for the module might change!
 
 Usage
 =====
@@ -6,11 +6,11 @@ Usage
 *To complete...*
 
 ## One Mapset per Landsat scene
-Using this script, pre-requires importing Landsat scenes each in its own Mapset
-using the import script found in
-<http://grasswiki.osgeo.org/wiki/LANDSAT#Automated_data_import>. The latter
-copies the respective acquisition metadata file (MTL.txt) in the `cell_misc`
-directory of the corresponding Mapset. 
+Using this script, pre-requires importing Landsat scenes each in its own Mapset.
+This can be performed using the import script from
+<https://github.com/NikosAlexandris/i.landsat.import>. The latter copies the
+respective acquisition metadata file (MTL.txt) in the `cell_misc` directory of
+the corresponding Mapset. 
 
 
 Notes
@@ -42,7 +42,9 @@ An overview of options to get *corrected* spectral reflectance values:
 
 * `i.atcorr` treats, *by default*, input bands as Spectral Radiance.
 
-* To make things work, either derive Spectral Radiance values via `i.landsat.toar` by instructing the `-r` flag, or let `i.atcorr` treat the input as Spectral Reflectance via its own `-r` flag!
+* To make things work,
+  * either derive Spectral Radiance values via `i.landsat.toar` by instructing the `-r` flag,
+  * or let `i.atcorr` treat the input as Spectral Reflectance via its own `-r` flag!
 
 * The value for aerosols optical depth (AOD), is set to `0.111` for winter and `0.222` for summer acquisitions to get going.
 
@@ -51,7 +53,9 @@ An overview of options to get *corrected* spectral reflectance values:
 Examples
 ========
 
-- Landsat8 OLI using LC81840332014226LGN00:  Works. For example `i.landsat.atcorr -r sensor=oli mapsets=. inputprefix=B.Rad. mtl=cell_misc/LC81840332014226LGN00_MTL.txt atm=3 aer=5 aod=.111 alt=-.15 --v --o`. Note, some parameters were random.
+The following are simply proof-of-concept examples. Parameters fed, such as `aod=` are arbitrarily chosen.
+
+- Landsat8 OLI using LC81840332014226LGN00:  Works. For example `i.landsat.atcorr -r sensor=oli mapsets=. inputprefix=B.Rad. mtl=cell_misc/LC81840332014226LGN00_MTL.txt atm=3 aer=5 aod=.111 alt=-.15 --v --o`.
 
 - Landsat7 ETM+ using <http://earthexplorer.usgs.gov/metadata/3372/LE70160352000091EDC00/> found in <http://grass.osgeo.org/sampledata/north_carolina/nc_spm_08_grass7.zip>
 
