@@ -20,7 +20,8 @@
 
 #%Module
 #%  description: Atmospheric correction of Landsat scenes. Acquisitions should be imported in GRASS' database in a one Mapset per scene manner! 
-#%  keywords: landsat, atmospheric correction
+#%  keywords: landsat
+#%  keywords: atmospheric correction
 #%End
 
 #%flag

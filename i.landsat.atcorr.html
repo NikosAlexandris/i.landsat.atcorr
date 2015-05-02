@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>GRASS GIS manual: i.landsat.atcorr</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="grassdocs.css" type="text/css">
+</head>
+<body bgcolor="white">
+<div id="container">
+
+<a href="index.html"><img src="grass_logo.png" alt="GRASS logo"></a>
+<hr class="header">
+
+<h2>NAME</h2>
+<em><b>i.landsat.atcorr</b></em>  - Atmospheric correction of Landsat scenes. Acquisitions should be imported in GRASS' database in a one Mapset per scene manner!
+<h2>KEYWORDS</h2>
+<a href="landsat,_atmospheric_correction.html">landsat, atmospheric correction</a>
+<h2>SYNOPSIS</h2>
+<div id="name"><b>i.landsat.atcorr</b><br></div>
+<b>i.landsat.atcorr --help</b><br>
+<div id="synopsis"><b>i.landsat.atcorr</b> [-<b>re</b>] <b>sensor</b>=<em>Sensor</em>  [<b>mapsets</b>=<em>Mapsets</em>]  <b>input_prefix</b>=<em>prefix string</em> <b>output_suffix</b>=<em>suffix string</em> <b>metafile</b>=<em>Metadata file</em> <b>atmospheric_model</b>=<em>index</em> <b>aerosols_model</b>=<em>index</em>  [<b>visual_range</b>=<em>distance or concentration</em>]   [<b>aod</b>=<em>concentration</em>]  <b>altitude</b>=<em>altitude</em>  [<b>elevation</b>=<em>elevation map</em>]   [<b>visibility_map</b>=<em>visibility map</em>]   [--<b>overwrite</b>]  [--<b>help</b>]  [--<b>verbose</b>]  [--<b>quiet</b>]  [--<b>ui</b>] 
+</div>
+
+<div id="flags">
+<h3>Flags:</h3>
+<dl>
+<dt><b>-r</b></dt>
+<dd>Input is Spectral Radiance</dd>
+
+<dt><b>-e</b></dt>
+<dd>Equalize histogram of output bands (r.colors -e)</dd>
+
+<dt><b>--overwrite</b></dt>
+<dd>Allow output files to overwrite existing files</dd>
+<dt><b>--help</b></dt>
+<dd>Print usage summary</dd>
+<dt><b>--verbose</b></dt>
+<dd>Verbose module output</dd>
+<dt><b>--quiet</b></dt>
+<dd>Quiet module output</dd>
+<dt><b>--ui</b></dt>
+<dd>Force launching GUI dialog</dd>
+</dl>
+</div>
+
+<div id="parameters">
+<h3>Parameters:</h3>
+<dl>
+<dt><b>sensor</b>=<em>Sensor</em>&nbsp;<b>[required]</b></dt>
+<dd>Landsat sensor</dd>
+<dd>Landsat sensor selecting spectral conditions indexing</dd>
+<dd>Options: <em>mss,  mss4,  tm,  etm,  oli</em></dd>
+<dd><b>mss</b>: mss1, mss2 or mss3: Multi Spectral Scanner on Landsat1-3. Bands 4, 5, 6, 7</dd>
+<dd><b>mss4</b>: or mss5: MSS on Landsat4-5. Bands 1, 2, 3, 4</dd>
+<dd><b>tm</b>: tm4 or tm5: Thematic Mapper on Landsat5. Bands 1, 2, 3, 4, 5, 6, 7</dd>
+<dd><b>etm</b>: Enhanced Thematic Mapper on Landsat7. Bands 1, 2, 3, 4, 5, 6, 7</dd>
+<dd><b>oli</b>: Operational Land Imager &amp; Thermal Infrared Sensor on Landsat8. Bands 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11</dd>
+
+<dt><b>mapsets</b>=<em>Mapsets</em></dt>
+<dd>Mapsets to process</dd>
+<dd>Scenes to process given bands of a scene imported in independent Mapsets</dd>
+<dd>Options: <em>all, current, selected</em></dd>
+<dd>Default: <em>current</em></dd>
+<dd><b>all</b>: All mapsets except of PERMANENT</dd>
+<dd><b>current</b>: Current mapset</dd>
+<dd><b>selected</b>: Only selected mapsets</dd>
+
+<dt><b>input_prefix</b>=<em>prefix string</em>&nbsp;<b>[required]</b></dt>
+<dd>Prefix of input bands</dd>
+<dd>Prefix of Landsat bands imported in GRASS' data base</dd>
+
+<dt><b>output_suffix</b>=<em>suffix string</em>&nbsp;<b>[required]</b></dt>
+<dd>Suffix for output image(s)</dd>
+<dd>Names of atmospherically corrected Landsat5 TM bands image(s) will end with this suffix</dd>
+<dd>Default: <em>AtmCor</em></dd>
+
+<dt><b>metafile</b>=<em>Metadata file</em>&nbsp;<b>[required]</b></dt>
+<dd>Acquisition's metadata file ()</dd>
+<dd>Landsat acquisition metadata file (.met or MTL.txt)</dd>
+
+<dt><b>atmospheric_model</b>=<em>index</em>&nbsp;<b>[required]</b></dt>
+<dd>Atmospheric model</dd>
+<dd>Index of the atmospheric model</dd>
+<dd>Options: <em>0, 1, 2, 3, 4, 5, 6, 7, 8</em></dd>
+<dd><b>0</b>: no gaseous absorption</dd>
+<dd><b>1</b>: tropical</dd>
+<dd><b>2</b>: milatitude summer</dd>
+<dd><b>3</b>: midlatitude winter</dd>
+<dd><b>4</b>: subarctic summer</dd>
+<dd><b>5</b>: subarctic winter</dd>
+<dd><b>6</b>: us standard 62</dd>
+<dd><b>7</b>: user defined</dd>
+<dd><b>8</b>: user defined</dd>
+
+<dt><b>aerosols_model</b>=<em>index</em>&nbsp;<b>[required]</b></dt>
+<dd>Aerosols model</dd>
+<dd>Index of the aerosols model</dd>
+<dd>Options: <em>0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11</em></dd>
+<dd><b>0</b>: no aerosols</dd>
+<dd><b>1</b>: continental</dd>
+<dd><b>2</b>: maritime</dd>
+<dd><b>3</b>: urban</dd>
+<dd><b>4</b>: shettle</dd>
+<dd><b>5</b>: biomass</dd>
+<dd><b>6</b>: stratospheric</dd>
+<dd><b>7</b>: user defined</dd>
+<dd><b>8</b>: user defined</dd>
+<dd><b>9</b>: user defined</dd>
+<dd><b>10</b>: user defined</dd>
+<dd><b>11</b>: user defined</dd>
+
+<dt><b>visual_range</b>=<em>distance or concentration</em></dt>
+<dd>Visibility</dd>
+<dd>Visibility [km] or Aerosols Optical Depth at 550nm (refer to i.atcorr's manual)</dd>
+
+<dt><b>aod</b>=<em>concentration</em></dt>
+<dd>AOD</dd>
+<dd>Aerosols Optical Depth at 550nm (refer to i.atcorr's manual). Based on the metadata, defaults to 0.111 for winter or 0.222 for summer acquisitions.</dd>
+
+<dt><b>altitude</b>=<em>altitude</em>&nbsp;<b>[required]</b></dt>
+<dd>Target or Sensor Altitude</dd>
+<dd>Mean target or sensor altitude (refer to i.atcorr's manual)</dd>
+
+<dt><b>elevation</b>=<em>elevation map</em></dt>
+<dd>Elevation map</dd>
+<dd>Elevation raster map as an input for i.atcorr (refer to i.atcorr's manual)</dd>
+
+<dt><b>visibility_map</b>=<em>visibility map</em></dt>
+<dd>Visibility map</dd>
+<dd>Visibility raster map as an input for i.atcorr (refer to i.atcorr's manual)</dd>
+
+</dl>
+</div>
+</body>
+</html>
