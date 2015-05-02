@@ -1,4 +1,6 @@
-Automatising atmospheric correction of Landsat scenes  --  **Work under progress**, option names for the module might change!
+* Automatising atmospheric correction of Landsat scenes
+*  **Work under progress**, option names for the module might change!
+* Currently not working! May 2nd, 2015
 
 Usage
 =====
