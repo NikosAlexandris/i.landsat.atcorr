@@ -24,6 +24,23 @@ P6S = {'geo': 'Geometrical conditions',
        'bnd': 'Satellite Band Number [index]'}
 
 
+# helper function
+def is_number(value):
+    '''
+    Check if input is a number
+    '''
+    if value is None:
+        return None
+    try:
+        float(value)  # for int, long and float
+    except ValueError:
+        try:
+            complex(value)  # for complex
+        except ValueError:
+            return None
+    return float(value)
+
+
 class Parameters:
 
     """6S Parameters (file) for i.atcorr"""
@@ -35,67 +52,75 @@ class Parameters:
 
         self.geo = int(geo)
 
+        # month
         if 1 <= mon <= 12:
-            self.mon = int(mon)  # month
+            self.mon = int(mon)
         else:
             raise ValueError("Invalid value for Month")
 
+        # day
         if 1 <= day <= 31:
-            self.day = int(day)  # day
+            self.day = int(day)
         else:
             raise ValueError("Error")
 
+        # decimal hours
         if type(gmt) == float:
             self.gmt = gmt  # decimal hours
         elif ':' in str(gmt):
             self.gmt = float(gmt[0:2]) + (float(gmt[3:5]) * 100 / 60) / 100
 
         self.mdg = "%d %d %.2f" % (self.mon, self.day, self.gmt)  # combine
-
+        
+        # scene's center Longitude
         if -180 <= float(lon) <= 180:
-            self.lon = float(lon)  # scene's center longitude
+            self.lon = float(lon)  
         else:
             raise ValueError("Invalid Longitude")
-
+        
+        # scene's center Latitude
         if -90 <= float(lat) <= 90:
-            self.lat = float(lat)  # scene's center latitude
+            self.lat = float(lat)  
         else:
             raise ValueError("Invalid Latitude")
 
-        self.acq = '%s %f %f' % (self.mdg, lon, lat)  # 2nd line of parameters
+        # 2nd line of parameters
+        self.acq = '%s %f %f' % (self.mdg, lon, lat)  
         if len(self.acq.split(' ')) < 5:
             raise ValueError("For line 2 in parameters file, "
                              "Something is missing...")
 
+        # atmospheric model
         if 0 <= atm <= 8:
             self.atm = int(atm)
         else:
             raise ValueError("Invalid atmospheric model index")
 
+        # aerosol model
         if 0 <= aer <= 11:
             self.aer = int(aer)
         else:
             raise ValueError("Invalid aerosols model index")
 
-        if not aod < 0:
+        # AOD validity
+        if is_number(aod):
 
             if aod > 0:
                 self.vis = 0  # set visibility to 0 if aod value defined
                 self.aod = float(aod)
 
-            elif float(aod) == float(0):
+            elif aod == float(0):
                 self.vis = -1  # set visibility to -1 if aod set to 0
                 self.aod = None
 
-            else:
-                self.vis = float(vis)
-
-        elif aod < 0:
-            raise ValueError("Invalid AOD value")
+            elif aod < 0:
+                raise ValueError("AOD can't be negative!")
 
         else:
+            self.vis = float(vis)
             self.aod = None
 
+        # target altitude, sensor platform
         self.xps = float(xps)  # xps <= 0 | xps >= 0 == 'target at sea level'
 
         if 1 <= geo <= 18:
@@ -103,6 +128,7 @@ class Parameters:
         elif (geo == 0 or geo > 18) and -100 <= xpp <= 0:
             self.xpp = float(xpp)  # -100 < alt < 0
 
+        # valid band number?
         if 2 <= bnd <= 123:
             self.bnd = int(bnd)
 
@@ -152,6 +178,7 @@ class Parameters:
 
 # Random example
 """
+print "Example One"
 print Parameters(geo=8,
  mon=11, day=22, gmt='02:15',
  lon=22.2, lat=33.3,
@@ -163,10 +190,14 @@ print Parameters(geo=8,
 
 """
 2012-11-08T23:42:37Z
-Parameters(geo=8,
- mon=11, day=08, gmt='23:42',
+"""
+
+"""
+print "Example Two"
+print Parameters(geo=8,
+ mon=11, day=8, gmt='23:42',
  lon=22.2, lat=33.3,
  atm=2, aer=1, vis=10, aod=None,
  xps=-200, xpp=-1000,
  bnd=26)
-"""
+ """
