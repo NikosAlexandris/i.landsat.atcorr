@@ -102,6 +102,13 @@ class Parameters:
         else:
             raise ValueError("Invalid aerosols model index")
 
+        # visibility
+        if is_number(vis):
+            print "Visibility:", vis
+            print "Type:", type(vis)
+            self.vis = float(vis)
+            self.aod = None
+
         # AOD validity
         if is_number(aod):
 
@@ -115,10 +122,6 @@ class Parameters:
 
             elif aod < 0:
                 raise ValueError("AOD can't be negative!")
-
-        else:
-            self.vis = float(vis)
-            self.aod = None
 
         # target altitude, sensor platform
         self.xps = float(xps)  # xps <= 0 | xps >= 0 == 'target at sea level'
@@ -139,11 +142,15 @@ class Parameters:
             % (P6S['mdg'], P6S['cll']) + '\n'
         self.parameters += str(self.atm) + '%s# %s' % (tabs, P6S['atm']) + '\n'
         self.parameters += str(self.aer) + '%s# %s' % (tabs, P6S['aer']) + '\n'
-        self.parameters += str(self.vis) + '%s# %s' % (tabs, P6S['vis']) + '\n'
-        if aod > 0 :
+
+        if self.vis:
+            self.parameters += str(self.vis) + '%s# %s' % (tabs, P6S['vis']) + '\n'
+            self.parameters += str(0) + '%s# %s' % (tabs, P6S['aod']) + '\n'
+        
+        if self.aod >= 0 :
+            self.parameters += str(self.vis) + '%s# %s' % (tabs, P6S['vis']) + '\n'
             self.parameters += str(self.aod) + '%s# %s' % (tabs, P6S['aod']) + '\n'
-        elif aod == None:
-            pass
+        
         self.parameters += str(self.xps) + '%s# %s' % (tabs, P6S['xps']) + '\n'
         self.parameters += str(self.xpp) + '%s# %s' % (tabs, P6S['xpp']) + '\n'
         self.parameters += str(self.bnd) + '%s# %s' % (tabs, P6S['bnd']) + '\n'

@@ -154,7 +154,7 @@
 #%end
 
 #%option
-#% key: visibility_map
+#% key: visibility
 #% key_desc: visibility map
 #% type: double
 #% label: Visibility map
@@ -197,12 +197,12 @@ sensors = {
 }
 
 
-# globals ------------------------------------------------------------------
+# globals
 g.message(msg)
-rad_flg = ''
+radiance_flag = ''
 
 
-# helper functions ----------------------------------------------------------
+# helper functions
 def cleanup():
     """Clean up temporary maps"""
     grass.run_command('g.remove', flags='f', type="rast",
@@ -210,9 +210,49 @@ def cleanup():
 
 
 def run(cmd, **kwargs):
-    """Pass quiet flag to grass commands"""
+    """
+    Pass quiet flag to grass commands
+    """
     grass.run_command(cmd, quiet=True, **kwargs)
 
+
+def run_i_atcorr(radiance_flag, input_band, input_range, elevation, visibility,
+                 parameters, output, output_range):
+    '''
+    Run i.atcorr using the provided options. Except for the required
+    parameters, the function updates the list of optional/selected parameters.
+
+    Optional inputs:
+
+    - range
+    - elevation
+    - visibility
+    - rescale
+    '''
+    params = {}
+
+    # inputs
+    if input_range:
+        params.update({'range': (input_range['min'], input_range['max'])})
+
+    if elevation:
+        params.update({'elevation': elevation})
+
+    if visibility:
+        params.update({'visibility': visibility})
+
+    if output_range:
+        params.update({'rescale': (output_range[0], output_range[1])})
+
+    print "Parameters given:", params
+    print
+
+    run('i.atcorr',
+        flags=radiance_flag,
+        input=input_band,
+        parameters=parameters,
+        output=output,
+        **params)
 
 def main():
     """ """
@@ -223,6 +263,8 @@ def main():
     suffix = options['output_suffix']
 
     metafile = grass.basename(options['metafile'])
+
+    # 6S parameter names shortened following i.atcorr's manual
     atm = int(options['atmospheric_model'])  # Atmospheric model [index]
     aer = int(options['aerosols_model'])  # Aerosols model [index]
 
@@ -235,15 +277,15 @@ def main():
               "defined as an input!"
         g.message(msg)
 
-    elevation = options['elevation']
-    vis_map = options['visibility_map']
+    elevation_map = options['elevation']
+    visibility_map = options['visibility']
 
     radiance = flags['r']
     if radiance:
         global rad_flg
-        rad_flg = 'r'
+        radiance_flag = 'r'
     else:
-        rad_flg = ''
+        radiance_flag = ''
 
     # If the scene to be processed was imported via the (custom) python
     # Landsat import script, then, Mapset name == Scene identifier
@@ -268,9 +310,9 @@ def main():
         else:
             metafile = result['file']
 
-    # -----------------------------------------------------------------------
+    #
     # Acquisition's metadata
-    # -----------------------------------------------------------------------
+    #
 
     msg = "Acquisition metadata for 6S code (line 2 in Parameters file)\n"
 
@@ -295,10 +337,23 @@ def main():
     msg += str(mon) + ' ' + str(day) + ' ' + str(gmt) + ' ' + \
         str(lon) + ' ' + str(lat)
     g.message(msg)
+   
+    # 
+    # AOD
+    #
+    if aod:
+        aod = float(options['aod'])
 
-    # -----------------------------------------------------------------------
+    else:
+        # sane defaults
+        if 4 < mon < 10:
+            aod = float(0.222)  # summer
+        else:
+            aod = float(0.111)  # winter
+
+    #
     # Mapsets are Scenes. Read'em all!
-    # -----------------------------------------------------------------------
+    #
 
     if mapsets == 'all':
         scenes = grass.mapsets()
@@ -330,17 +385,9 @@ def main():
         for band in sensors[sensor].keys():
 
             inputband = prefix + str(band)
-            msg = "\n>>> Processing band:  %s" % inputband
+            msg = '\n>>> Processing band: {band}'.format(band=inputband)
             g.message(msg)
 
-            # sane aod defaults?
-            if not aod:
-                if 4 < mon < 10:
-                    aod = 0.222  # summer
-                else:
-                    aod = 0.111  # winter
-            else:
-                aod = float(options['aod'])
 
             # Generate 6S parameterization file
             p6s = Parameters(geo=geo[sensor],
@@ -351,14 +398,15 @@ def main():
                              aod=aod,
                              xps=xps, xpp=xpp,
                              bnd=sensors[sensor][band])
-
-            # ========================================== Temporary files ====
-            tmpfile = grass.tempfile()  # replace with os.getpid?
+            
+            #
+            # Temporary files
+            #
+            tmpfile = grass.tempfile()
             tmp = "tmp." + grass.basename(tmpfile)  # use its basename
 
             tmp_p6s = grass.tempfile()  # 6S Parameters ASCII file
             tmp_atm_cor = "%s_cor_out" % tmp  # Atmospherically Corrected Img
-            # Temporary files ===============================================
 
             p6s.export_ascii(tmp_p6s)
 
@@ -368,69 +416,30 @@ def main():
             g.message(msg)
 
             # inform about input's range?
-            inp_rng = grass.parse_command('r.info', flags='r', map=inputband)
-            inp_rng['min'] = float(inp_rng['min'])
-            inp_rng['max'] = float(inp_rng['max'])
-            msg = "Input range: %.2f ~ %.2f" % (inp_rng['min'], inp_rng['max'])
+            input_range = grass.parse_command('r.info', flags='r', map=inputband)
+            input_range['min'] = float(input_range['min'])
+            input_range['max'] = float(input_range['max'])
+            msg = "Input range: %.2f ~ %.2f" % (input_range['min'], input_range['max'])
             g.message(msg)
 
-            # ---------------------------------------------------------------
+            #
             # Applying 6S Atmospheric Correction algorithm
-            # ---------------------------------------------------------------
-
-            if vis_map and (not elevation):
-                run('i.atcorr',
-                    flags=rad_flg,
-                    input=inputband,
-                    range=(inp_rng['min'], inp_rng['max']),
-                    parameters=tmp_p6s,
-                    visibility=vis_map,
-                    output=tmp_atm_cor,
-                    rescale=(0, 1))
-
-            elif elevation and (not vis_map):
-                """Using an elevation map.
-                Attention: does the elevation cover the area of the images?"""
-                run('i.atcorr',
-                    flags=rad_flg,
-                    input=inputband,
-                    range=(inp_rng['min'], inp_rng['max']),
-                    parameters=tmp_p6s,
-                    elevation=elevation,
-                    output=tmp_atm_cor,
-                    rescale=(0, 1))
-
-            elif elevation and vis_map:
-                """Using an elevation map.
-                Attention: does the elevation cover the area of the images?"""
-                run('i.atcorr',
-                    flags=rad_flg,
-                    input=inputband,
-                    range=(inp_rng['min'], inp_rng['max']),
-                    parameters=tmp_p6s,
-                    visibility=vis_map,
-                    elevation=elevation,
-                    output=tmp_atm_cor,
-                    rescale=(0, 1))
-
-            else:
-                """Output is reflectance ranging in [0,1]"""
-                run('i.atcorr',
-                    flags=rad_flg,
-                    input=inputband,
-                    range=(inp_rng['min'], inp_rng['max']),
-                    parameters=tmp_p6s,
-                    visibility=vis_map,
-                    elevation=elevation,
-                    output=tmp_atm_cor,
-                    rescale=(0, 1))
-
+            #
+            run_i_atcorr(radiance_flag,
+                         inputband,
+                         input_range,
+                         elevation_map,
+                         visibility_map,
+                         tmp_p6s,
+                         tmp_atm_cor,
+                         (0,1))
+        
             # inform about output's range?
-            out_rng = grass.parse_command('r.info', flags='r', map=tmp_atm_cor)
-            out_rng['min'] = float(out_rng['min'])
-            out_rng['max'] = float(out_rng['max'])
+            output_range = grass.parse_command('r.info', flags='r', map=tmp_atm_cor)
+            output_range['min'] = float(output_range['min'])
+            output_range['max'] = float(output_range['max'])
             msg = "Output range: %.2f ~ %.2f" \
-                % (out_rng['min'], out_rng['max'])
+                % (output_range['min'], output_range['max'])
             g.message(msg)
 
             # add suffix to basename & rename end product
