@@ -9,7 +9,7 @@
                 Trikala, Nov. 2014
                 Based on an earlier script provided by Yann Chemin
 
- PURPOSE:       Scripting i.atcorr for Landsat satellite acquisitions
+ PURPOSE:      Scripting i.atcorr for Landsat satellite acquisitions
 
  COPYRIGHT:    (C) 2013 by the GRASS Development Team
 
@@ -108,13 +108,13 @@
 #% label: Aerosols model
 #% description: Index of the aerosols model
 #% options: 0,1,2,3,4,5,6,7,8,9,10,11
-#% descriptions: 0;no aerosols;1;continental;2;maritime;3;urban;4;shettle;5;biomass;6;stratospheric;7;user defined;8;user defined;9;user defined;10;user defined;11;user defined
+#% descriptions: 0;no aerosols;1;continental;2;maritime;3;urban;4;desert;5;biomass burning;6;stratospheric;7;user defined;8;user defined;9;user defined;10;user defined;11;user defined
 #% guisection: Parameters
 #% required: yes
 #%end
 
 #%option
-#% key: visual_range
+#% key: visibility_range
 #% key_desc: distance or concentration
 #% type: double
 #% label: Visibility
@@ -124,7 +124,7 @@
 #%end
 
 #%option
-#% key: aod
+#% key: aerosols_optical_depth
 #% key_desc: concentration
 #% type: double
 #% label: AOD
@@ -180,7 +180,7 @@ import grass.script as grass
 from grass.pygrass.modules.shortcuts import general as g
 from parameters import Parameters
 
-msg = '''Usage: $0 [Meant Target Elevation] [AOD]\n
+msg = '''Usage: $0 [Mean Target Elevation] [AOD]\n
       Note, the script has to be eXecuted from the directory that contains\n
       the *MTL.txt metadata and within from the GRASS environment!'''
 
@@ -205,7 +205,7 @@ radiance_flag = ''
 # helper functions
 def cleanup():
     """Clean up temporary maps"""
-    grass.run_command('g.remove', flags='f', type="rast",
+    grass.run_command('g.remove', flags='f', type="raster",
                       pattern='tmp.%s*' % os.getpid(), quiet=True)
 
 
@@ -268,8 +268,8 @@ def main():
     atm = int(options['atmospheric_model'])  # Atmospheric model [index]
     aer = int(options['aerosols_model'])  # Aerosols model [index]
 
-    vis = options['visual_range']  # Visibility [km]
-    aod = options['aod']  # Aerosol Optical Depth at 550nm
+    vis = options['visibility_range']  # Visibility [km]
+    aod = options['aerosol_optical_depth']  # Aerosol Optical Depth at 550nm
 
     xps = options['altitude']  # Mean Target Altitude [negative km]
     if not xps:
@@ -292,7 +292,7 @@ def main():
 
     mapset = grass.gisenv()['MAPSET']
     if mapset == 'PERMANENT':
-        grass.fatal(_('Please change to another Mapset than the PERMANENT'))
+        grass.fatal(_('Please change to another mapset than the PERMANENT'))
 
 #    elif 'L' not in mapset:
 #        msg = "Assuming the Landsat scene(s) ha-s/ve been imported using the "\
@@ -342,7 +342,7 @@ def main():
     # AOD
     #
     if aod:
-        aod = float(options['aod'])
+        aod = float(options['aerosol_optical_depth'])
 
     else:
         # sane defaults
